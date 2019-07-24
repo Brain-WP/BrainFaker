@@ -1,0 +1,28 @@
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.0/phpunit.xsd"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         backupGlobals="false"
+         stopOnFailure="false">
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./src</directory>
+            <exclude>
+                <directory>./vendor</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+    <testsuites>
+        <testsuite name="unit">
+            <directory suffix="Test.php">./tests/cases/unit</directory>
+        </testsuite>
+        <testsuite name="unit:providers">
+            <directory suffix="Test.php">./tests/cases/unit/Provider</directory>
+        </testsuite>
+        <testsuite name="functional">
+            <directory suffix="Test.php">./tests/cases/functional</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

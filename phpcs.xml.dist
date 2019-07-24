@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<ruleset>
+
+    <file>./src</file>
+
+    <arg value="sp"/>
+
+    <rule ref="Inpsyde.CodeQuality.Psr4">
+        <properties>
+            <property
+                name="psr4"
+                type="array"
+                value="Brain\Faker=>src,Brain\Faker\Tests=>tests/src,Brain\Faker\Tests\Unit=>tests/cases/unit,Brain\Faker\Tests\Functional=>tests/cases/functional"/>
+        </properties>
+    </rule>
+
+</ruleset>

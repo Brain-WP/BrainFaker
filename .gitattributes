@@ -1,0 +1,12 @@
+* text eol=lf
+
+*.png binary
+*.jpg binary
+*.mo binary
+
+/resources/js/ export-ignore
+/resources/scss/ export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/README.md export-ignore
+/CHANGELOG.md export-ignore
