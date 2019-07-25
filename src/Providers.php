@@ -383,23 +383,34 @@ class Providers
             'Five' => 5,
         ];
 
+        $prefixExp = 'atLeast|atMost|between';
         $numExp = '(?:[0-9]+)|(?:' . implode('|', array_keys($numWords)) . ')';
-        $minOrMax = preg_match("/^(atLeast|atMost)({$numExp})(.+)\$/", $method, $args1);
-        $between = preg_match("/^between({$numExp})And({$numExp})(.+)\$/", $method, $args2);
+        $dynamicMethod = preg_match(
+            "/^(?P<prefix>{$prefixExp})(?<n1>{$numExp})(?:And(?P<n2>{$numExp}))?(?P<method>.+)\$/",
+            $method,
+            $matches
+        );
+
+        if (!$dynamicMethod) {
+            return [false, $method, null, null];
+        }
+
+        $minOrMax = $matches['prefix'] !== 'between' && empty($matches['n2']);
+        $between = $matches['prefix'] === 'between' && !empty($matches['n2']);
 
         if (!$minOrMax && !$between) {
             return [false, $method, null, null];
         }
 
         if ($minOrMax) {
-            $isNum = is_numeric($args1[2]);
-            $atNum = $isNum ? (int)$args1[2] : $numWords[$args1[2]];
-            $maybeMethod = lcfirst($args1[3]);
+            $isNum = is_numeric($matches['n1']);
+            $atNum = $isNum ? (int)$matches['n1'] : $numWords[$matches['n1']];
+            $maybeMethod = lcfirst($matches['method']);
             if (($atNum === 1 && array_key_exists($maybeMethod, $this->methods[self::ONE]))
                 || array_key_exists($maybeMethod, $this->methods[self::MANY])
             ) {
-                $atLeast = $args1[1] === 'atLeast' ? $atNum : null;
-                $atMost = $args1[1] === 'atLeast' ? null : $atNum;
+                $atLeast = $matches['prefix'] === 'atLeast' ? $atNum : null;
+                $atMost = $matches['prefix'] === 'atLeast' ? null : $atNum;
 
                 return [true, $maybeMethod, $atLeast, $atMost];
             }
@@ -407,13 +418,13 @@ class Providers
             return [false, $method, null, null];
         }
 
-        $isNumMin = is_numeric($args2[1]);
-        $isNumMax = is_numeric($args2[2]);
-        $maybeMethod = lcfirst($args2[3]);
+        $isNumMin = is_numeric($matches['n1']);
+        $isNumMax = is_numeric($matches['n2']);
+        $maybeMethod = lcfirst($matches['method']);
 
         if (array_key_exists($maybeMethod, $this->methods[self::MANY])) {
-            $min = $isNumMin ? (int)$args2[1] : $numWords[$args2[1]];
-            $max = $isNumMax ? (int)$args2[2] : $numWords[$args2[2]];
+            $min = $isNumMin ? (int)$matches['n1'] : $numWords[$matches['n1']];
+            $max = $isNumMax ? (int)$matches['n2'] : $numWords[$matches['n2']];
             $atLeast = min($min, $max);
             $atMost = max($min, $max);
 
