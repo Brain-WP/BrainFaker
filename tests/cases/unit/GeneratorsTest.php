@@ -19,9 +19,9 @@ class GeneratorsTest extends TestCase
 {
     public function testInstantiation()
     {
-        $generatorIt = Generators::forLocale('it_IT');
+        $generatorIt = Generators::create('it_IT');
         $generatorDefault = Generators::create();
-        $generatorItAgain = Generators::forLocale('it_IT');
+        $generatorItAgain = Generators::create('it_IT');
         $generatorDefaultAgain = Generators::create();
 
         static::assertSame($generatorIt, $generatorItAgain);
@@ -30,8 +30,8 @@ class GeneratorsTest extends TestCase
 
         Generators::reset();
 
-        $generatorItThirdTime = Generators::forLocale('it_IT');
-        $generatorItFourthTime = Generators::forLocale('it_IT');
+        $generatorItThirdTime = Generators::create('it_IT');
+        $generatorItFourthTime = Generators::create('it_IT');
 
         static::assertSame($generatorItThirdTime, $generatorItFourthTime);
         static::assertNotSame($generatorIt, $generatorItThirdTime);

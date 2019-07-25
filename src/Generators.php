@@ -33,32 +33,36 @@ class Generators
     private static $generators = [];
 
     /**
-     * @return Generator
-     */
-    public static function create(): Generator
-    {
-        return static::forLocale(FakerFactory::DEFAULT_LOCALE);
-    }
-
-    /**
      * @param string $locale
      * @return Generator
      */
-    public static function forLocale(string $locale): Generator
+    public static function create(string $locale = FakerFactory::DEFAULT_LOCALE): Generator
     {
+        return static::fromGenerator(FakerFactory::create($locale), $locale);
+    }
+
+    /**
+     * @param Generator $faker
+     * @param string $locale
+     * @return Generator
+     */
+    public static function fromGenerator(
+        Generator $faker,
+        string $locale = FakerFactory::DEFAULT_LOCALE
+    ): Generator {
+
         if (array_key_exists($locale, static::$generators)) {
             return static::$generators[$locale];
         }
 
-        /** @var Generator $faker */
-        $faker = FakerFactory::create($locale);
         $provider = new Providers($faker);
 
         foreach (self::PROVIDERS as $className => [$methodOne, $methodMany]) {
-            $provider->addProviderClass($className, $methodOne, $methodMany);
+            $provider->__addProviderClass($className, $methodOne, $methodMany);
         }
 
         $faker->addProvider($provider);
+
         static::$generators[$locale] = $faker;
 
         return $faker;

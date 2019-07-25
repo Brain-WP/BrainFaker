@@ -20,7 +20,7 @@ use Faker\Generator;
  */
 function faker(string $locale = Factory::DEFAULT_LOCALE): Generator
 {
-    return Faker\Generators::forLocale($locale);
+    return Faker\Generators::create($locale);
 }
 
 /**
