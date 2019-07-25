@@ -188,6 +188,19 @@ class Providers
     /**
      * @return Providers
      */
+    public function __resetUnique(): Providers
+    {
+        /** @var Provider $provider */
+        foreach ($this->providers as $provider) {
+            $provider->resetUnique();
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Providers
+     */
     public function wp(): Providers
     {
         return $this;

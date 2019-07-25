@@ -39,6 +39,14 @@ abstract class Provider
     }
 
     /**
+     * @return void
+     */
+    final public function resetUnique(): void
+    {
+        $this->uniqueGenerator = $this->generator->unique(true);
+    }
+
+    /**
      * @param array $args
      * @return object
      */
