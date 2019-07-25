@@ -28,14 +28,10 @@ abstract class Provider
 
     /**
      * @param Generator $generator
-     * @param UniqueGenerator $uniqueGenerator
      */
-    final public function __construct(
-        Generator $generator,
-        UniqueGenerator $uniqueGenerator
-    ) {
+    final public function __construct(Generator $generator) {
         $this->generator = $generator;
-        $this->uniqueGenerator = $uniqueGenerator;
+        $this->uniqueGenerator = $generator->unique(true);
     }
 
     /**

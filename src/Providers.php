@@ -443,7 +443,7 @@ class Providers
         $class = $isMany ? $this->methods[self::MANY][$method] : $this->methods[self::ONE][$method];
 
         if (empty($this->providers[$class])) {
-            $this->providers[$class] = new $class($this->generator, $this->generator->unique());
+            $this->providers[$class] = new $class($this->generator);
         }
 
         return [$this->providers[$class], $isMany];
