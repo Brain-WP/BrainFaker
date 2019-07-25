@@ -42,18 +42,10 @@ class ProvidersTest extends TestCase
     {
         $this->expectExceptionMessageRegExp('/class/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    protected function __invoke(array $args = []) {
-    }
-}
-PHP;
-        @eval($php);
+        $class = $this->declarePhpClass(null, null, 'protected');
 
         $provider = new Providers(Factory::create());
-        $provider->__addProviderClass(ExampleClass::class, 'a', 'b');
+        $provider->__addProviderClass($class, 'a', 'b');
     }
 
     public function testAddProviderClassFailsForNotInstantiableClass()
@@ -61,138 +53,79 @@ PHP;
         $this->expectException(\Error::class);
         $this->expectExceptionMessageRegExp('/not a valid provider class/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-abstract class ThisClassIsAbstract extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass(null, null, null, 'abstract');
 
         $provider = new Providers(Factory::create());
-        $provider->__addProviderClass(ThisClassIsAbstract::class, 'foo', 'bar');
+        /** @noinspection PhpUndefinedClassInspection */
+        $provider->__addProviderClass($class, 'foo', 'bar');
     }
 
     public function testAddProviderClassFailsForReservedMethodOne()
     {
         $this->expectExceptionMessageRegExp('/reserved method/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
-        $provider->__addProviderClass(ExampleClass::class, 'wp', 'bar');
+        $provider->__addProviderClass($class, 'wp', 'bar');
     }
 
     public function testAddProviderClassFailsForReservedMethodMany()
     {
         $this->expectExceptionMessageRegExp('/reserved method/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
-        $provider->__addProviderClass(ExampleClass::class, 'foo', '__call');
+        $provider->__addProviderClass($class, 'foo', '__call');
     }
 
     public function testAddProviderClassFailsForNotUniqueClass()
     {
         $this->expectExceptionMessageRegExp('/uniquely identify/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ClassOne extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-    }
-}
-
-class ClassTwo extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-    }
-}
-PHP;
-        eval($php);
+        $class1 = $this->declarePhpClass('ClassOne');
+        $class2 = $this->declarePhpClass('ClassTwo');
 
         $provider = new Providers(Factory::create());
-        $provider->__addProviderClass(ClassOne::class, 'foo', 'notUnique');
-        $provider->__addProviderClass(ClassTwo::class, 'notUnique', 'baz');
+        $provider->__addProviderClass($class1, 'foo', 'notUnique');
+        $provider->__addProviderClass($class2, 'notUnique', 'baz');
+
+        /** @noinspection PhpUndefinedMethodInspection */
         $provider->wp()->notUnique();
     }
 
     public function testAddProviderClassSuccessfully()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        static::assertSame(
-            $provider,
-            $provider->__addProviderClass(ExampleClass::class, 'one', 'many')
-        );
+        static::assertSame($provider, $provider->__addProviderClass($class, 'one', 'many'));
     }
 
     public function testCallNotRegisteredMethod()
     {
         $this->expectExceptionMessageRegExp('/undefined method/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+
+        /** @noinspection PhpUndefinedMethodInspection */
         $provider->wp()->foo();
     }
 
     public function testCallOne()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass(null, 'return (object)["name" => "one"];');
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+        /** @noinspection PhpUndefinedMethodInspection */
         $result = $provider->wp()->one();
 
         static::assertInstanceOf(\stdClass::class, $result);
@@ -203,20 +136,12 @@ PHP;
     {
         $this->expectExceptionMessageRegExp('/number/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+        /** @noinspection PhpUndefinedMethodInspection */
         $provider->wp()->many('meh');
     }
 
@@ -224,39 +149,30 @@ PHP;
     {
         $this->expectExceptionMessageRegExp('/array/');
 
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+        /** @noinspection PhpUndefinedMethodInspection */
         $provider->wp()->many(1, 'meh');
     }
 
     public function testCallMany()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
+        $invoke = <<<'PHP'
+$args['str'] = $this->uniqueGenerator->word();
+$args['num'] = $this->generator->randomNumber();
+return (object)$args;
 PHP;
-        eval($php);
+
+        $class = $this->declarePhpClass(null, $invoke);
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+
+        /** @noinspection PhpUndefinedMethodInspection */
         $result = $provider->wp()->many(7);
 
         static::assertIsArray($result);
@@ -266,149 +182,86 @@ PHP;
         foreach ($result as $element) {
             static::assertNotSame($last, $element);
             static::assertInstanceOf(\stdClass::class, $element);
-            static::assertSame('one', $element->name);
+            static::assertIsString($element->str);
+            static::assertIsInt($element->num);
             $last = $element;
         }
     }
 
     public function testCallManyWithDefaults()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+        /** @noinspection PhpUndefinedMethodInspection */
         $result = $provider->wp()->many();
 
         static::assertIsArray($result);
 
         foreach ($result as $element) {
-            static::assertSame('one', $element->name);
+            static::assertInstanceOf(\stdClass::class, $element);
         }
     }
 
     public function testCallManyReturnEmptyArrayIfRequiringZeroItems()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)['name' => 'one'];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         static::assertSame([], $provider->wp()->many(0));
     }
 
     public function testCallOneWithArgs()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        $args['foo'] = $this->generator->word;
-        $args['bar'] = $this->uniqueGenerator->word;
-        return (object)$args;
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass($class, 'one', 'many');
+
+        /** @noinspection PhpUndefinedMethodInspection */
         $result = $provider->wp()->one(['hello' => 'world']);
 
         static::assertInstanceOf(\stdClass::class, $result);
         static::assertSame('world', $result->hello);
-        static::assertIsString($result->foo);
-        static::assertIsString($result->bar);
     }
 
     public function testCallOneViaProperty()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        $args or $args = ['default' => 'Yes!'];
-        $args['foo'] = $this->generator->word;
-        $args['bar'] = $this->uniqueGenerator->word;
-        
-        return (object)$args;
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
-        $result = $provider->wp()->one;
+        $provider->__addProviderClass($class, 'one', 'many');
 
-        static::assertInstanceOf(\stdClass::class, $result);
-        static::assertSame('Yes!', $result->default);
-        static::assertIsString($result->foo);
-        static::assertIsString($result->bar);
+        static::assertInstanceOf(\stdClass::class, $provider->wp()->one);
     }
 
     public function testCallManyViaProperty()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        $args or $args = ['default' => 'Yes sir'];
-        
-        return (object)$args;
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
-        $result = $provider->wp()->many;
+        $provider->__addProviderClass($class, 'one', 'many');
 
-        static::assertIsArray($result);
+        static::assertIsArray($provider->wp()->many);
     }
 
     public function testAtLeast()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)[];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'item', 'items');
+        $provider->__addProviderClass($class, 'item', 'items');
+        /** @noinspection PhpUndefinedMethodInspection */
         $result = $provider->wp()->atLeast3items();
 
         static::assertIsArray($result);
@@ -417,30 +270,21 @@ PHP;
 
     public function testAtMost()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleOne extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)[];
-    }
-}
-
-class ExampleTwo extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)[];
-    }
-}
-PHP;
-        eval($php);
+        $class1 = $this->declarePhpClass('ExampleOne');
+        $class2 = $this->declarePhpClass('ExampleTwo');
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleOne::class, 'post', 'posts');
-        $provider->__addProviderClass(ExampleTwo::class, 'user', 'users');
+        $provider->__addProviderClass($class1, 'post', 'posts');
+        $provider->__addProviderClass($class2, 'user', 'users');
+
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMost2posts = $provider->wp()->atMost2posts();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMost3users = $provider->wp()->atMost3users();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMost1users = $provider->wp()->atMost1users();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMost0posts = $provider->wp()->atMost0posts();
 
         static::assertIsArray($atMost2posts);
@@ -454,31 +298,32 @@ PHP;
 
     public function testAtLeastAndAtMostDynamic()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)[];
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'thing', 'things');
+        $provider->__addProviderClass($class, 'thing', 'things');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $atLeastOneThing = $provider->wp()->atLeastOneThing();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atLeastTwoThings = $provider->wp()->atLeastTwoThings();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atLeastThreeThings = $provider->wp()->atLeastThreeThings();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atLeastFourThings = $provider->wp()->atLeastFourThings();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atLeastFiveThings = $provider->wp()->atLeastFiveThings();
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMostOneThing = $provider->wp()->atMostOneThing();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMostTwoThings = $provider->wp()->atMostTwoThings();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMostThreeThings = $provider->wp()->atMostThreeThings();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMostFourThings = $provider->wp()->atMostFourThings();
+        /** @noinspection PhpUndefinedMethodInspection */
         $atMostFiveThings = $provider->wp()->atMostFiveThings();
 
         static::assertIsArray($atLeastOneThing);
@@ -507,37 +352,30 @@ PHP;
 
     public function testBetweenDynamic()
     {
-        $php = <<<'PHP'
-namespace Brain\Faker\Tests\Unit;
-
-class ExampleClass extends \Brain\Faker\Provider\Provider {
-    public function __invoke(array $args = []) {
-        return (object)$args;
-    }
-}
-PHP;
-        eval($php);
+        $class = $this->declarePhpClass();
 
         $provider = new Providers(Factory::create());
 
-        $provider->__addProviderClass(ExampleClass::class, 'thing', 'things');
+        $provider->__addProviderClass($class, 'thing', 'things');
 
         $allTheThings = [
-            [$provider->wp()->betweenOneAndThreeThings(['x' => 'X']), 1, 3],
-            [$provider->wp()->betweenFiveAndTwoThings(['x' => 'X']), 2, 5],
-            [$provider->wp()->betweenFourAndFourThings(['x' => 'X']), 4, 4],
-            [$provider->wp()->between1AndThreeThings(['x' => 'X']), 1, 3],
-            [$provider->wp()->between5AndTwoThings(['x' => 'X']), 2, 5],
-            [$provider->wp()->between4AndFourThings(['x' => 'X']), 4, 4],
-            [$provider->wp()->betweenOneAnd3Things(['x' => 'X']), 1, 3],
-            [$provider->wp()->betweenFiveAnd2Things(['x' => 'X']), 2, 5],
-            [$provider->wp()->betweenFourAnd4Things(['x' => 'X']), 4, 4],
-            [$provider->wp()->between1And3Things(['x' => 'X']), 1, 3],
-            [$provider->wp()->between5And2Things(['x' => 'X']), 2, 5],
-            [$provider->wp()->between4And4Things(['x' => 'X']), 4, 4],
+            ['betweenOneAndThreeThings', 1, 3],
+            ['betweenFiveAndTwoThings', 2, 5],
+            ['betweenFourAndFourThings', 4, 4],
+            ['between1AndThreeThings', 1, 3],
+            ['between5AndTwoThings', 2, 5],
+            ['between4AndFourThings', 4, 4],
+            ['betweenOneAnd3Things', 1, 3],
+            ['betweenFiveAnd2Things', 2, 5],
+            ['betweenFourAnd4Things', 4, 4],
+            ['between1And3Things', 1, 3],
+            ['between5And2Things', 2, 5],
+            ['between4And4Things', 4, 4],
         ];
 
-        foreach ($allTheThings as [$things, $min, $max]) {
+        foreach ($allTheThings as [$method, $min, $max]) {
+            $things = $provider->wp()->{$method}(['x' => 'X']);
+
             static::assertIsArray($things);
 
             foreach ($things as $thing) {
@@ -555,5 +393,73 @@ PHP;
             static::assertGreaterThanOrEqual($min, $count);
             static::assertLessThanOrEqual($max, $count);
         }
+    }
+
+    public function testBetweenDynamicWrongEdgeCases()
+    {
+        $class = $this->declarePhpClass();
+
+        $provider = new Providers(Factory::create());
+
+        $provider->__addProviderClass($class, 'thing', 'things');
+
+        $methods = [
+            'atLeastOneAndThreeThings',
+            'atMost1And3Things',
+            'atMostOneMeh',
+            'between2Things',
+            'between2And3Stuff',
+        ];
+
+        $expected = count($methods);
+        $exceptionsCount = 0;
+
+        try {
+            execute: {
+                $method = array_shift($methods);
+                $provider->wp()->{$method}();
+            }
+        } catch (\Error $e) {
+            static::assertRegExp('/undefined method/', $e->getMessage());
+            $exceptionsCount++;
+            if ($methods) {
+                goto execute;
+            }
+        }
+
+        static::assertSame($expected, $exceptionsCount);
+    }
+
+    /**
+     * @param string $name
+     * @param string|null $invokeBody
+     * @param string $invokeVisibility
+     * @param string|null $classModifier
+     * @return string
+     */
+    private function declarePhpClass(
+        ?string $name = null,
+        ?string $invokeBody = null,
+        ?string $invokeVisibility = null,
+        ?string $classModifier = null
+    ): string {
+
+        isset($name) or $name = 'ExampleClass';
+        isset($invokeBody) or $invokeBody = 'return (object)$args;';
+        isset($invokeVisibility) or $invokeVisibility = 'public';
+        isset($classModifier) or $classModifier = '';
+
+            $php = <<<PHP
+namespace Brain\Faker\Tests\Unit;
+
+{$classModifier} class {$name} extends \Brain\Faker\Provider\Provider {
+    {$invokeVisibility} function __invoke(array \$args = []) {
+        {$invokeBody}
+    }
+}
+PHP;
+        @eval($php);
+
+        return "\\Brain\\Faker\\Tests\\Unit\\{$name}";
     }
 }
