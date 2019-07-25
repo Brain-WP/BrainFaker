@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpDocSignatureInspection */
+/** @noinspection PhpInconsistentReturnPointsInspection */
+
 namespace Brain\Faker;
 
 /**
