@@ -390,8 +390,15 @@ class User extends Provider
             ?? $properties['capabilities']
             ?? null;
 
-        $userRoles = is_array($roles) ? $roles : [];
-        ($role && is_string($role)) and $userRoles[] = $role;
+        $rawRoles = is_array($roles) ? $roles : [];
+        ($role && is_string($role)) and $rawRoles[] = $role;
+
+        $userRoles = [];
+        foreach ($rawRoles as $rawRole) {
+            if ($rawRole && is_string($rawRole) && !in_array($rawRole, $userRoles, true)) {
+                $userRoles[] = $rawRole;
+            }
+        }
 
         if (is_numeric($level) && !$userRoles) {
             $foundLevels = [];
