@@ -37,18 +37,26 @@ class Error extends Provider
         $error->errors = $errors;
         $error->error_data = $errorData;
 
+        $error->shouldReceive('has_errors')
+            ->andReturnUsing(
+                static function () use (&$error) {
+                    return isset($error->errors) && $error->errors;
+                }
+            )
+            ->byDefault();
+
         $error->shouldReceive('get_error_codes')
             ->andReturnUsing(
-                function () use (&$error) {
-                    return $error->errors ? array_keys($error->errors) : [];
+                static function () use (&$error) {
+                    return $error->has_errors() ? array_keys($error->errors) : [];
                 }
             )
             ->byDefault();
 
         $error->shouldReceive('get_error_code')
             ->andReturnUsing(
-                function () use (&$error) {
-                    return $error->errors ? array_keys($error->errors)[0] : '';
+                static function () use (&$error) {
+                    return $error->get_error_codes()[0] ?? '';
                 }
             )
             ->byDefault();
@@ -56,7 +64,7 @@ class Error extends Provider
         $error->shouldReceive('get_error_messages')
             ->withNoArgs()
             ->andReturnUsing(
-                function () use (&$error) {
+                static function () use (&$error) {
                     $allMessages = [];
                     foreach ($error->errors as $codeMessages) {
                         $allMessages = array_merge($allMessages, $codeMessages);
@@ -70,7 +78,11 @@ class Error extends Provider
         $error->shouldReceive('get_error_messages')
             ->with(\Mockery::type('scalar'))
             ->andReturnUsing(
-                function ($code) use (&$error) {
+                static function ($code) use (&$error) {
+                    if (!$code) {
+                        return $error->get_error_messages();
+                    }
+
                     return $error->errors[$code] ?? [];
                 }
             )
@@ -79,10 +91,8 @@ class Error extends Provider
         $error->shouldReceive('get_error_message')
             ->withNoArgs()
             ->andReturnUsing(
-                function () use (&$error) {
-                    $code = $error->errors ? array_keys($error->errors)[0] : '';
-
-                    return $error->errors[$code][0] ?? '';
+                static function () use (&$error) {
+                    return $error->errors[$error->get_error_code()][0] ?? '';
                 }
             )
             ->byDefault();
@@ -90,8 +100,8 @@ class Error extends Provider
         $error->shouldReceive('get_error_message')
             ->with(\Mockery::type('scalar'))
             ->andReturnUsing(
-                function ($code) use (&$error) {
-                    return $error->errors[$code][0] ?? '';
+                static function ($code) use (&$error) {
+                    return $error->errors[$code ?: $error->get_error_code()][0] ?? '';
                 }
             )
             ->byDefault();
@@ -99,10 +109,8 @@ class Error extends Provider
         $error->shouldReceive('get_error_data')
             ->withNoArgs()
             ->andReturnUsing(
-                function () use (&$error) {
-                    $code = $error->error_data ? array_keys($error->error_data)[0] : null;
-
-                    return $code === null ? null : ($this->error_data[$code] ?? null);
+                static function () use (&$error) {
+                    return $error->error_data[$error->get_error_code()] ?? null;
                 }
             )
             ->byDefault();
@@ -110,16 +118,8 @@ class Error extends Provider
         $error->shouldReceive('get_error_data')
             ->with(\Mockery::type('scalar'))
             ->andReturnUsing(
-                function ($code) use (&$error) {
-                    return $error->error_data[$code] ?? null;
-                }
-            )
-            ->byDefault();
-
-        $error->shouldReceive('has_errors')
-            ->andReturnUsing(
-                function () use (&$error) {
-                    return (bool)$error->errors;
+                static function ($code) use (&$error) {
+                    return $error->error_data[$code ?: $error->get_error_code()] ?? null;
                 }
             )
             ->byDefault();
@@ -127,7 +127,7 @@ class Error extends Provider
         $error->shouldReceive('add')
             ->with(\Mockery::type('scalar'), \Mockery::type('string'))
             ->andReturnUsing(
-                function ($code, $message) use (&$error) {
+                static function ($code, $message) use (&$error) {
                     array_key_exists($code, $error->errors) or $error->errors[$code] = [];
                     $error->errors[$code][] = $message;
                 }
@@ -137,7 +137,7 @@ class Error extends Provider
         $error->shouldReceive('add')
             ->with(\Mockery::type('scalar'), \Mockery::type('string'), \Mockery::any())
             ->andReturnUsing(
-                function ($code, $message, $data) use (&$error) {
+                static function ($code, $message, $data) use (&$error) {
                     array_key_exists($code, $error->errors) or $error->errors[$code] = [];
                     $error->errors[$code][] = $message;
                     if (!$data) {
@@ -152,8 +152,8 @@ class Error extends Provider
         $error->shouldReceive('add_data')
             ->with(\Mockery::any())
             ->andReturnUsing(
-                function ($data) use (&$error) {
-                    $code = $error->errors ? array_keys($error->errors)[0] : '';
+                static function ($data) use (&$error) {
+                    $code = $error->get_error_code();
                     array_key_exists($code, $error->error_data) or $error->error_data[$code] = [];
                     $error->error_data[$code] = $data;
                 }
@@ -163,7 +163,7 @@ class Error extends Provider
         $error->shouldReceive('add_data')
             ->with(\Mockery::any(), \Mockery::type('scalar'))
             ->andReturnUsing(
-                function ($data, $code) use (&$error) {
+                static function ($data, $code) use (&$error) {
                     array_key_exists($code, $error->error_data) or $error->error_data[$code] = [];
                     $error->error_data[$code] = $data;
                 }
@@ -173,7 +173,7 @@ class Error extends Provider
         $error->shouldReceive('remove')
             ->with(\Mockery::type('scalar'))
             ->andReturnUsing(
-                function ($code) use (&$error) {
+                static function ($code) use (&$error) {
                     unset($error->errors[$code]);
                     unset($error->error_data[$code]);
                 }

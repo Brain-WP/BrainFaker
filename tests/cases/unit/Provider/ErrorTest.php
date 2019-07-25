@@ -92,4 +92,46 @@ class ErrorTest extends FactoryTestCase
 
         static::assertTrue($error->has_errors());
     }
+
+    public function testAddErrorData()
+    {
+        /** @var Provider\Error $factory */
+        $factory = $this->factoryProvider(Provider\Error::class);
+        $error = $factory();
+
+        $error->add_data('Data before');
+
+        static::assertSame('Data before', $error->get_error_data());
+        static::assertSame('Data before', $error->get_error_data(''));
+
+        $error->add('x', 'One');
+
+        $error->add_data('Data after');
+        $error->add_data('Data foo', 'foo');
+
+        static::assertSame('Data after', $error->get_error_data());
+        static::assertSame('Data after', $error->get_error_data(''));
+        static::assertSame('Data after', $error->get_error_data('x'));
+        static::assertSame('Data foo', $error->get_error_data('foo'));
+    }
+
+    public function testRemove()
+    {
+        /** @var Provider\Error $factory */
+        $factory = $this->factoryProvider(Provider\Error::class);
+        $error = $factory();
+
+        $error->add('code', 'msg', 'data');
+
+        static::assertSame('code', $error->get_error_code());
+        static::assertSame('msg', $error->get_error_message());
+        static::assertSame('data', $error->get_error_data());
+
+        $error->remove('code');
+
+        static::assertSame('', $error->get_error_code());
+        static::assertSame('', $error->get_error_message());
+        static::assertNull($error->get_error_data());
+    }
+
 }
