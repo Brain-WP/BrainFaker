@@ -1,6 +1,6 @@
 # Brain Faker
 
-Use [Faker](https://github.com/fzaninotto/Faker) and [Brain Monkey](https://github.com/Brain-WP/BrainMonkey) 
+Uses [Faker](https://github.com/fzaninotto/Faker) and [Brain Monkey](https://github.com/Brain-WP/BrainMonkey) 
 to provide easy generation of fake WordPress objects and related functions.
 
 ---
@@ -98,116 +98,163 @@ class MyPostCase extends FakerTestCase
             
             static::assertGreaterThanOrEqual(1, $post->ID);
             
-            static::assertIsArray($post->toArray());
+            static::assertIsArray($post->to_array());
         }
     }
 }
 ```
 
-`$this->wpFaker->posts()` accept as first argument the number of posts to generate.
+`$this->wpFaker->posts()`, the method we sued to generate fake `WP_Post` instances, accepts as first 
+argument the number of posts to generate.
 
-A second optional argument can be used to determine some properties of the generated posts, e.g. we could do:
+A second optional argument can be used to fix some properties one the generated posts, e.g. we could do:
 
 ```php
-$this->wpFaker->posts(10, ['type' => 'page', 'status' => 'publish'])
+$this->wpFaker->posts(10, ['type' => 'page', 'status' => 'publish']);
 ```
 
 to obtain 10 posts with post type "page" and post status "publish".
  
 If not provided, all properties are generated randomly.
 
-The function, can be called without arguments at all, and the library will generate a random number
-of posts, which could be zero.
+It worth noting that calling `$this->wpFaker->posts()` (with not arguments) is the same of doing
+`$this->wpFaker->posts`, as usually happen in Faker.
 
-It worth noting that calling `$this->wpFaker->posts()` is the same of doing `$this->wpFaker->posts`,
-as usually happen in Faker.
+Besides `$this->wpFaker->posts()`, Brain Faker also has `$this->wpFaker->post()` that returns a
+single instance of a mocked `WP_Post`, and like `posts()`, also accepts the optional parameter
+with the array of properties to assign to it.
 
-Besides `$this->wpFaker->posts()` the are two set of methods that we can use to generate posts:
+The first argument accepted by `$this->wpFaker->posts()` is the number of objects we want to generate.
 
-- `$this->wpFaker->atLeast{$n}posts()`, e. g. `$this->wpFaker->atLeast2posts()`
-- `$this->wpFaker->atMost{$n}posts()`, e. g. `$this->wpFaker->atMost20posts()`
+However, it is optional, and if not provided the library will generate a random number of objects
+(which could be zero).
 
-Both these set of methods accept, just like `posts()` accept the optional parameter, with the array 
-of properties to assign to the generated posts.
+Sometimes it is desirable to generate either a minimum or a maximum number of objects, for this scope
+Brain Faker provides two set of methods in the form:
 
-Finally, the last method related to post generation is `$this->wpFaker->post()` that return a single
-instance of a mocked `WP_Post`, and also accepts the optional parameter with the array of properties
-to assign to it.
+- `$this->wpFaker->atLeast{$n}Posts()`, e. g. `$this->wpFaker->atLeast6Posts()`
+- `$this->wpFaker->atMost{$n}Posts()`, e. g. `$this->wpFaker->atMost20Posts()`
+
+Please note that for number between 1 and 5 is possible to use words, e.g all the following are valid
+methods:
+
+- `$this->wpFaker->atLeastOnePost()`
+- `$this->wpFaker->atMostOnePost()`
+- `$this->wpFaker->atLeastTwoPosts()`
+- `$this->wpFaker->atMostThreePosts()`
+- `$this->wpFaker->atMostFivePosts()`
+
+Also note how the suffix can be singular, like `atLeastOnePost`, when the number is `One` (or `1`).
+
+To set _both_ the minimum and the maximum number of generated instances, Brain Faker provides a set
+of methods in the form:
+
+- `$this->wpFaker->between{$min}and{$max}Posts()`
+
+where both `$min` and `$max`, for numbers between 1 and 5, could be in word-form for example:
+
+- `$this->wpFaker->betweenOneAndThreePosts()`
+- `$this->wpFaker->between6And10Posts()`
+- `$this->wpFaker->between0AndFoursPosts()`
+
+All these "dynamic-named" methods, just like all the others, accept the optional parameter with the
+array of properties to assign to the generated posts:
+
+```php
+$posts = $this->wpFaker->atLeastTwoPosts(['type' => 'post']);
+
+$pages = $this->wpFaker->between3And10Posts(['type' => 'page']);
+```
 
 
 ## Not only posts
 
-What as been said for posts is also true for other supported objects, in fact we also have:
+**All** as been said above for posts is also true for other supported objects, in fact we also have:
 
-for users:
+for **posts**:
+
+- `$this->wpFaker->posts()`
+- `$this->wpFaker->atLeast{$n}Posts()`
+- `$this->wpFaker->atMosts{$n}Posts()`
+- `$this->wpFaker->between{$min}and{$max}Posts()`
+- `$this->wpFaker->post()`
+
+for **users**:
 
 - `$this->wpFaker->users()`
-- `$this->wpFaker->atLeast{$n}users()`
-- `$this->wpFaker->atMosts{$n}users()`
+- `$this->wpFaker->atLeast{$n}Users()`
+- `$this->wpFaker->atMosts{$n}Users()`
+- `$this->wpFaker->between{$min}and{$max}Users()`
 - `$this->wpFaker->user()`
 
-for terms:
+for **terms**:
 
 - `$this->wpFaker->terms()`
 - `$this->wpFaker->atLeast{$n}terms()`
 - `$this->wpFaker->atMosts{$n}terms()`
+- `$this->wpFaker->between{$min}and{$max}Terms()`
 - `$this->wpFaker->term()`
 
-for comments:
+for **comments**:
 
 - `$this->wpFaker->comments()`
 - `$this->wpFaker->atLeast{$n}comments()`
 - `$this->wpFaker->atMosts{$n}comments()`
+- `$this->wpFaker->between{$min}and{$max}Comments()`
 - `$this->wpFaker->comment()`
 
-for sites:
+for **sites**:
 
 - `$this->wpFaker->sites()`
 - `$this->wpFaker->atLeast{$n}sites()`
 - `$this->wpFaker->atMosts{$n}sites()`
+- `$this->wpFaker->between{$min}and{$max}Sites()`
 - `$this->wpFaker->site()`
 
-for post types:
+for **post types**:
 
 - `$this->wpFaker->postTypes()`
-- `$this->wpFaker->atLeast{$n}postTypes()`
-- `$this->wpFaker->atMosts{$n}postTypes()`
+- `$this->wpFaker->atLeast{$n}PostTypes()`
+- `$this->wpFaker->atMosts{$n}PostTypes()`
+- `$this->wpFaker->between{$min}and{$max}PostTypes()`
 - `$this->wpFaker->postType()`
 
-for taxonomy:
+for **taxonomy**:
 
 - `$this->wpFaker->taxonomies()`
-- `$this->wpFaker->atLeast{$n}taxonomies()`
-- `$this->wpFaker->atMosts{$n}taxonomies()`
+- `$this->wpFaker->atLeast{$n}Taxonomies()`
+- `$this->wpFaker->atMosts{$n}Taxonomies()`
+- `$this->wpFaker->between{$min}and{$max}Taxonomies()`
 - `$this->wpFaker->taxonomy()`
 
-for `WP_Error`:
+for **`WP_Error`**:
 
 - `$this->wpFaker->errors()`
-- `$this->wpFaker->atLeast{$n}errors()`
-- `$this->wpFaker->atMosts{$n}errors()`
+- `$this->wpFaker->atLeast{$n}Errors()`
+- `$this->wpFaker->atMosts{$n}Errors()`
+- `$this->wpFaker->between{$min}and{$max}Errors()`
 - `$this->wpFaker->error()`
 
 
 ## About returned instances
 
-For all the returned objects, Brain Faker sets **all** the objects properties that _real_ WordPress
-objects would have.
+For all the returned objects, Brain Faker sets **all** the objects public properties that _real_ 
+WordPress objects would have.
 
-Thanks to Faker, all the properties will have random, but "realistic", values: emails will be emails,
-URLs will be URLs, passwords will be password, and so on.
+Thanks to Faker, all the properties will have random, but "realistic", values (emails will be emails,
+URLs will be URLs, passwords will be password, and so on).
 
-Properties that do not exists on the objects, but WordPress make available via magic method `__get`,
-are available on fake objects as well, for example `$this->wpFaker->user->user_login` would be perfectly
-valid, even if `user_login` is a property that _real_ `WP_User` instances make available via magic
-method.
+Properties that do not exists on the objects as declared properties, but WordPress make available
+via magic method `__get`, are available on fake objects as well, for example doing 
+`$this->wpFaker->user->user_login` would be perfectly valid, even if `user_login` is a property
+that _real_ `WP_User` instances make available via magic method.
 
-It has been said already that returned instances are mock objects obtained via Mockery.
+It has been said already that returned instances are mock objects obtained via [Mockery](https://github.com/mockery/mockery).
 
-It is important to say that _not_ all method are mocked.
+It is important to say that _not_ all methods are mocked.
 
-For example, for posts, only `to_array` method is mocked, but other methods like `filter` are not
-mocked, but can always be mocked manually.
+For example, for posts, only `WP_Post::to_array()` method is mocked, but other methods like `WP_Post::filter()`
+are not mocked, but can surely be mocked "manually".
 
 For example, the following is valid code:
 
@@ -217,16 +264,17 @@ $this->wpFaker->post
     ->once();
 ```
 
-The methods that are actually mocked vary, of course, from object to object.
+The methods that Brain Faker mocks vary from object to object.
 
-On top of that, Brain Faker also mocks some "related functions".
+On top of that, Brain Faker also mocks some WordPress "related functions".
 
-Below there is the complete list of methods and functions that are mocked for each kind of object.
+Below there is the complete list of methods and functions that are mocked by Brain Faker for each 
+kind of object it supports.
 
 
-## What is mocked for...
+## What is mocked
 
-### ...Posts
+### What is mocked for Posts
 
 When creating fake `WP_Post` objects, Brain Faker creates mocks with:
 
@@ -253,23 +301,25 @@ class MyPostCase extends FakerTestCase
 
 When called with the ID of the post we faked (and we know it because was enforced via the provided array),
 `get_post` returns the instance of the fake post we generated.
+
 However when called with another ID, it returns `null`.
 
 This is not the behavior of WordPress (which will return `false` for not found posts) and this is a
 known limitation, at least in current version.
 
-The way `get_post` works, it is similar to all the other functions that Brain Faker will mock.
+The way `get_post` works shown above, it is similar to all the other functions that Brain Faker 
+will mock.
 
-### ...Users
+### What is mocked for Users
 
 When creating fake `WP_User` objects, Brain Faker creates mocks with:
 
 - **all** the `WP_User` objects properties, including the many that WordPress make available via
   `__get`, such us `first_name`, `last_name`, `user_login`, and many others;
-- `WP_User::to_array()`, method  
-- `WP_User::exists()`, method  
-- `WP_User::get_site_id()`, method  
-- `WP_User::has_cap()`, method  
+- `WP_User::to_array()`, method;  
+- `WP_User::exists()`, method;  
+- `WP_User::get_site_id()`, method;  
+- `WP_User::has_cap()`, method;  
 - `get_user_data()` function, but *only* when called with the IDs of the generated instances;
 - `get_user_by()` function, but *only* when called with the arguments that match the generated instances;
 - `user_can()` function, but *only* when called with the arguments that match the generated instances;
@@ -287,8 +337,8 @@ This is extremely powerful because with one line of code it is possible to mock 
 code without loading WordPress.
 
 More so, considering that the fake `WP_User` instances are mocked in a way that is extremely similar
-to real WordPress objects (this is true for all fake objects), for example the capabilities will be
-very "realistic".
+to real WordPress objects (this is true for all fake objects), for example the role and capabilities
+will be very "realistic".
 
 For example, consider the following code:
 
@@ -304,7 +354,7 @@ class MyUserCase extends FakerTestCase
 }
 ```
 
-### ...Terms
+### What is mocked for Terms
 
 When creating fake `WP_Term` objects, Brain Faker creates mocks with:
 
@@ -313,14 +363,14 @@ When creating fake `WP_Term` objects, Brain Faker creates mocks with:
 - `get_term` function, but *only* when called with the arguments that match the generated instances;
 - `get_term_by` function, but *only* when called with the arguments that match the generated instances;
 
-### ...Comments
+### What is mocked for Comments
 
 When creating fake `WP_Comment` objects, Brain Faker creates mocks with:
 
 - **all** the `WP_Comment` objects properties;
 - `WP_Term::to_array()` method;
 
-### ...Sites
+### What is mocked for Sites
 
 When creating fake `WP_Site` objects, Brain Faker creates mocks with:
 
@@ -328,7 +378,7 @@ When creating fake `WP_Site` objects, Brain Faker creates mocks with:
 - `WP_Site::to_array()` method;
 - `get_site()` function, but *only* when called with the IDs of the generated instances;
 
-### ...Taxonomies
+### What is mocked for Taxonomies
 
 When creating fake `WP_Taxonomy` objects, Brain Faker creates mocks with:
 
@@ -336,7 +386,7 @@ When creating fake `WP_Taxonomy` objects, Brain Faker creates mocks with:
 - `get_taxonomy()` function, but *only* when called with the names of the generated instances;
 - `taxonomy_exists()` function, but *only* when called with the names of the generated instances;
 
-### ...Post Types
+### What is mocked for Post Types
 
 When creating fake `WP_Post_Type` objects, Brain Faker creates mocks with:
 
@@ -344,7 +394,7 @@ When creating fake `WP_Post_Type` objects, Brain Faker creates mocks with:
 - `get_post_type_object()` function, but *only* when called with the names of the generated instances;
 - `post_type_exists()` function, but *only* when called with the names of the generated instances;
 
-### ...Errors
+### What is mocked for Errors
 
 When creating fake `WP_Error` objects, Brain Faker creates mocks with:
 
@@ -352,7 +402,7 @@ When creating fake `WP_Error` objects, Brain Faker creates mocks with:
 - **all** the `WP_Error` public methods;
 
 Fake `WP_Error` instances are the only mocked objects created by Brain Faker whose properties are not
-"filled" randomly, but that are *completely* mocked, so the can basically used as WordPress objects.
+"filled" randomly, but that are *completely* mocked, so they can be used as WordPress objects.
 
 Imagine some WordPress code that looks like this:
 
@@ -372,6 +422,9 @@ Using Brain Faker (and Brain Monkey) we could test it like this:
 ```php
 class MyErrorCase extends FakerTestCase
 {
+    /**
+     * Test that error have expected message and data when `is_error_there` returns true
+     */
     public function testMaybeAddErrorWhenErrorIsThere()
     {
         \Brain\Monkey\Functions\when('is_error_there')->justReturn(true);
@@ -381,8 +434,14 @@ class MyErrorCase extends FakerTestCase
         static::assertTrue($error->has_errors());
         
         static::assertSame('A message', $error->get_error_message());
+        
+        static::assertSame('some data', $error->get_error_data());
     }
     
+    
+    /**
+     * Test that error is empty when `is_error_there` returns false
+     */
     public function testMaybeAddErrorWhenErrorIsNotThere()
     {
         \Brain\Monkey\Functions\when('is_error_there')->justReturn(false);
@@ -396,20 +455,55 @@ class MyErrorCase extends FakerTestCase
 }
 ```
 
-Even if all methods are mocked, nothing prevents in test to override already mocked methods, and this
-is true for all fake objects generated by Brain Faker.
+Please note that even if all `\WP_Error` methods are mocked, nothing prevents in tests to override 
+already mocked methods (and this is true for all fake objects generated by Brain Faker).
 
 
 ## On IDs unicity
 
-For objects that support IDs (posts, users, terms, comments), unless those as given in the options
+For objects that support IDs (posts, users, terms, comments), unless those are given in the options
 array, an ID is generated randomly.
 
-It is interesting to note that those IDs are unique inside each tests (or at least as soon as `
-Brain\fakerReset` is called).
+It is interesting to note that those randomly generated IDs are unique inside each tests 
+(or at least as soon as `Brain\fakerReset` is called).
 
-E. g. doing `$this->wpFaker->atLeast50Posts()` Brain Faker will create at least 50 mocked posts 
-instances, each with a different ID.
+For example, doing `$this->wpFaker->atLeast50Users()` Brain Faker will create at least 50 mocked
+user instances, each with a different ID.
+
+This feature is based on [Faker `unique()` modifier](https://github.com/fzaninotto/Faker#modifiers).
+
+As it is possible to read on Faker documentation, the unique generator can be "reset", to do this
+when using Brain Faker it is passible to call `$this->wpFaker->__resetUnique()`. 
+
+
+## Localized Faker
+
+[Faker supports localization](https://github.com/fzaninotto/Faker#localization) for some of its providers.
+
+To obtain a localized version of Faker, when using Brain Faker, it is possible to pass the desired
+locale to `\Brain\faker()` function.
+
+For example:
+
+```php
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Brain\Monkey\setUp();
+        
+        $this->faker = \Brain\faker('fr_FR');
+        $this->wpFaker = $this->wpFaker->wp();
+    }
+```
+
+Of course, it is possible to have multiple instances of Faker (and Brain Faker), for different locales
+and also don't instantiate them on `setUp` but in the individual tests.
+
+Even in that case, calling `\Brain\reset()` once at the end of the test will be fine.
+
+Only thing to consider is that `__resetUnique()` (see previous section) called on one localized
+instance has no effects on the other instances that might exist in the same test.
+
 
 
 ## Installation, Requirements, License
@@ -418,7 +512,7 @@ Brain Faker is released under MIT.
 
 It requires PHP 7.1+
 
-Can be installed via Composer, available on packagist.org as `brain/faker`.
+Can be installed via Composer, available on [packagist.org](https://packagist.org/) as `brain/faker`.
 
 Via Composer it requires:
 
