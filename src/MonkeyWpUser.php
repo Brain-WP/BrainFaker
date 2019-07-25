@@ -1,6 +1,9 @@
 <?php
 namespace Brain\Faker;
 
+/**
+ * @codeCoverageIgnore
+ */
 class MonkeyWpUser
 {
     /**

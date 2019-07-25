@@ -26,7 +26,7 @@ class ProvidersTest extends TestCase
         $this->expectExceptionMessageRegExp('/class/');
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass(__CLASS__, 'bar', 'baz');
+        $provider->__addProviderClass(__CLASS__, 'bar', 'baz');
     }
 
     public function testAddProviderClassFailsForNotExistentClass()
@@ -35,7 +35,7 @@ class ProvidersTest extends TestCase
         $this->expectExceptionMessageRegExp('/class/');
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass('Meh', 'bar', 'baz');
+        $provider->__addProviderClass('Meh', 'bar', 'baz');
     }
 
     public function testAddProviderClassFailsForMalformedClass()
@@ -53,7 +53,7 @@ PHP;
         @eval($php);
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass(ExampleClass::class, 'a', 'b');
+        $provider->__addProviderClass(ExampleClass::class, 'a', 'b');
     }
 
     public function testAddProviderClassFailsForNotInstantiableClass()
@@ -72,7 +72,7 @@ PHP;
         eval($php);
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass(ThisClassIsAbstract::class, 'foo', 'bar');
+        $provider->__addProviderClass(ThisClassIsAbstract::class, 'foo', 'bar');
     }
 
     public function testAddProviderClassFailsForReservedMethodOne()
@@ -90,7 +90,7 @@ PHP;
         eval($php);
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass(ExampleClass::class, 'wp', 'bar');
+        $provider->__addProviderClass(ExampleClass::class, 'wp', 'bar');
     }
 
     public function testAddProviderClassFailsForReservedMethodMany()
@@ -108,7 +108,7 @@ PHP;
         eval($php);
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass(ExampleClass::class, 'foo', '__call');
+        $provider->__addProviderClass(ExampleClass::class, 'foo', '__call');
     }
 
     public function testAddProviderClassFailsForNotUniqueClass()
@@ -131,8 +131,8 @@ PHP;
         eval($php);
 
         $provider = new Providers(Factory::create());
-        $provider->addProviderClass(ClassOne::class, 'foo', 'notUnique');
-        $provider->addProviderClass(ClassTwo::class, 'notUnique', 'baz');
+        $provider->__addProviderClass(ClassOne::class, 'foo', 'notUnique');
+        $provider->__addProviderClass(ClassTwo::class, 'notUnique', 'baz');
         $provider->wp()->notUnique();
     }
 
@@ -152,7 +152,7 @@ PHP;
 
         static::assertSame(
             $provider,
-            $provider->addProviderClass(ExampleClass::class, 'one', 'many')
+            $provider->__addProviderClass(ExampleClass::class, 'one', 'many')
         );
     }
 
@@ -173,7 +173,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $provider->wp()->foo();
     }
 
@@ -192,7 +192,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $result = $provider->wp()->one();
 
         static::assertInstanceOf(\stdClass::class, $result);
@@ -216,7 +216,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $provider->wp()->many('meh');
     }
 
@@ -237,7 +237,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $provider->wp()->many(1, 'meh');
     }
 
@@ -256,7 +256,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $result = $provider->wp()->many(7);
 
         static::assertIsArray($result);
@@ -286,7 +286,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $result = $provider->wp()->many();
 
         static::assertIsArray($result);
@@ -311,7 +311,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
 
         static::assertSame([], $provider->wp()->many(0));
     }
@@ -333,7 +333,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $result = $provider->wp()->one(['hello' => 'world']);
 
         static::assertInstanceOf(\stdClass::class, $result);
@@ -361,13 +361,13 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $result = $provider->wp()->one;
 
         static::assertInstanceOf(\stdClass::class, $result);
         static::assertSame('Yes!', $result->default);
         static::assertIsString($result->foo);
-        static::assertIsString( $result->bar);
+        static::assertIsString($result->bar);
     }
 
     public function testCallManyViaProperty()
@@ -387,7 +387,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'one', 'many');
+        $provider->__addProviderClass(ExampleClass::class, 'one', 'many');
         $result = $provider->wp()->many;
 
         static::assertIsArray($result);
@@ -408,7 +408,7 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleClass::class, 'item', 'items');
+        $provider->__addProviderClass(ExampleClass::class, 'item', 'items');
         $result = $provider->wp()->atLeast3items();
 
         static::assertIsArray($result);
@@ -436,8 +436,8 @@ PHP;
 
         $provider = new Providers(Factory::create());
 
-        $provider->addProviderClass(ExampleOne::class, 'post', 'posts');
-        $provider->addProviderClass(ExampleTwo::class, 'user', 'users');
+        $provider->__addProviderClass(ExampleOne::class, 'post', 'posts');
+        $provider->__addProviderClass(ExampleTwo::class, 'user', 'users');
         $atMost2posts = $provider->wp()->atMost2posts();
         $atMost3users = $provider->wp()->atMost3users();
         $atMost1users = $provider->wp()->atMost1users();
@@ -450,5 +450,110 @@ PHP;
         static::assertContains(count($atMost2posts), [0, 1, 2]);
         static::assertContains(count($atMost3users), [0, 1, 2, 3]);
         static::assertContains(count($atMost1users), [0, 1]);
+    }
+
+    public function testAtLeastAndAtMostDynamic()
+    {
+        $php = <<<'PHP'
+namespace Brain\Faker\Tests\Unit;
+
+class ExampleClass extends \Brain\Faker\Provider\Provider {
+    public function __invoke(array $args = []) {
+        return (object)[];
+    }
+}
+PHP;
+        eval($php);
+
+        $provider = new Providers(Factory::create());
+
+        $provider->__addProviderClass(ExampleClass::class, 'thing', 'things');
+
+        $atLeastOneThing = $provider->wp()->atLeastOneThing();
+        $atLeastTwoThings = $provider->wp()->atLeastTwoThings();
+        $atLeastThreeThings = $provider->wp()->atLeastThreeThings();
+        $atLeastFourThings = $provider->wp()->atLeastFourThings();
+        $atLeastFiveThings = $provider->wp()->atLeastFiveThings();
+
+        $atMostOneThing = $provider->wp()->atMostOneThing();
+        $atMostTwoThings = $provider->wp()->atMostTwoThings();
+        $atMostThreeThings = $provider->wp()->atMostThreeThings();
+        $atMostFourThings = $provider->wp()->atMostFourThings();
+        $atMostFiveThings = $provider->wp()->atMostFiveThings();
+
+        static::assertIsArray($atLeastOneThing);
+        static::assertIsArray($atLeastTwoThings);
+        static::assertIsArray($atLeastThreeThings);
+        static::assertIsArray($atLeastFourThings);
+        static::assertIsArray($atLeastFiveThings);
+        static::assertIsArray($atMostOneThing);
+        static::assertIsArray($atMostTwoThings);
+        static::assertIsArray($atMostThreeThings);
+        static::assertIsArray($atMostFourThings);
+        static::assertIsArray($atMostFiveThings);
+
+        static::assertGreaterThanOrEqual(1, count($atLeastOneThing));
+        static::assertGreaterThanOrEqual(2, count($atLeastTwoThings));
+        static::assertGreaterThanOrEqual(3, count($atLeastThreeThings));
+        static::assertGreaterThanOrEqual(4, count($atLeastFourThings));
+        static::assertGreaterThanOrEqual(5, count($atLeastFiveThings));
+
+        static::assertLessThanOrEqual(1, count($atMostOneThing));
+        static::assertLessThanOrEqual(2, count($atMostTwoThings));
+        static::assertLessThanOrEqual(3, count($atMostThreeThings));
+        static::assertLessThanOrEqual(4, count($atMostFourThings));
+        static::assertLessThanOrEqual(5, count($atMostFiveThings));
+    }
+
+    public function testBetweenDynamic()
+    {
+        $php = <<<'PHP'
+namespace Brain\Faker\Tests\Unit;
+
+class ExampleClass extends \Brain\Faker\Provider\Provider {
+    public function __invoke(array $args = []) {
+        return (object)$args;
+    }
+}
+PHP;
+        eval($php);
+
+        $provider = new Providers(Factory::create());
+
+        $provider->__addProviderClass(ExampleClass::class, 'thing', 'things');
+
+        $allTheThings = [
+            [$provider->wp()->betweenOneAndThreeThings(['x' => 'X']), 1, 3],
+            [$provider->wp()->betweenFiveAndTwoThings(['x' => 'X']), 2, 5],
+            [$provider->wp()->betweenFourAndFourThings(['x' => 'X']), 4, 4],
+            [$provider->wp()->between1AndThreeThings(['x' => 'X']), 1, 3],
+            [$provider->wp()->between5AndTwoThings(['x' => 'X']), 2, 5],
+            [$provider->wp()->between4AndFourThings(['x' => 'X']), 4, 4],
+            [$provider->wp()->betweenOneAnd3Things(['x' => 'X']), 1, 3],
+            [$provider->wp()->betweenFiveAnd2Things(['x' => 'X']), 2, 5],
+            [$provider->wp()->betweenFourAnd4Things(['x' => 'X']), 4, 4],
+            [$provider->wp()->between1And3Things(['x' => 'X']), 1, 3],
+            [$provider->wp()->between5And2Things(['x' => 'X']), 2, 5],
+            [$provider->wp()->between4And4Things(['x' => 'X']), 4, 4],
+        ];
+
+        foreach ($allTheThings as [$things, $min, $max]) {
+            static::assertIsArray($things);
+
+            foreach ($things as $thing) {
+                static::assertInstanceOf(\stdClass::class, $thing);
+                static::assertSame('X', $thing->x);
+            }
+
+            $count = count($things);
+
+            if ($min === $max) {
+                static::assertSame($min, $count);
+                continue;
+            }
+
+            static::assertGreaterThanOrEqual($min, $count);
+            static::assertLessThanOrEqual($max, $count);
+        }
     }
 }
