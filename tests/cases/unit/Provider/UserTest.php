@@ -13,9 +13,9 @@ namespace Brain\Faker\Tests\Unit\Provider;
 
 use Brain\Monkey;
 use Brain\Faker\Provider;
-use Brain\Faker\Tests\FactoryTestCase;
+use Brain\Faker\Tests\ProviderTestCase;
 
-class UserTest extends FactoryTestCase
+class UserTest extends ProviderTestCase
 {
     public function testNoPropertiesCreation()
     {

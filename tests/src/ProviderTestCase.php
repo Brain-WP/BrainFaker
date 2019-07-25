@@ -14,7 +14,7 @@ namespace Brain\Faker\Tests;
 use Brain\Faker\Provider\Provider;
 use Faker\Factory;
 
-abstract class FactoryTestCase extends TestCase
+abstract class ProviderTestCase extends TestCase
 {
     /**
      * @param string $class
@@ -22,10 +22,8 @@ abstract class FactoryTestCase extends TestCase
      */
     protected function factoryProvider(string $class): Provider
     {
-        $faker = Factory::create();
-
         /** @var Provider $provider */
-        $provider = new $class($faker, $faker->unique());
+        $provider = new $class(Factory::create());
 
         return $provider;
     }

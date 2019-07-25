@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Tests\Unit\Provider;
 
-use Brain\Faker\Tests\FactoryTestCase;
+use Brain\Faker\Tests\ProviderTestCase;
 use Brain\Faker\Provider;
 use Brain\Monkey;
 
-class SiteTest extends FactoryTestCase
+class SiteTest extends ProviderTestCase
 {
     public function testNoPropertiesCreation()
     {
