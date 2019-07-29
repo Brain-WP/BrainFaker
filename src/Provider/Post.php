@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-class Post extends Provider
+class Post extends FunctionMockerProvider
 {
     public const MIME_TYPES = [
         'image/jpeg',
@@ -56,17 +56,11 @@ class Post extends Provider
     private $posts = [];
 
     /**
-     * @var bool
-     */
-    private $functionsMocked = false;
-
-    /**
      * @return void
      */
     public function reset(): void
     {
         $this->posts = [];
-        $this->functionsMocked = false;
         parent::reset();
     }
 
@@ -182,13 +176,11 @@ class Post extends Provider
 
     private function mockFunctions(): void
     {
-        if ($this->functionsMocked) {
+        if (!$this->canMockFunctions()) {
             return;
         }
 
-        $this->functionsMocked = true;
-
-        $this->monkeyMockFunction('get_post')
+        $this->functionExpectations->mock('get_post')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any())
             ->andReturnUsing(
@@ -204,7 +196,7 @@ class Post extends Provider
                 }
             );
 
-        $this->monkeyMockFunction('get_post_field')
+        $this->functionExpectations->mock('get_post_field')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($field = null, $post = null) { // phpcs:ignore
@@ -216,6 +208,8 @@ class Post extends Provider
                     return $this->posts[(int)$postId][$field] ?? '';
                 }
             );
+
+        $this->stopMockingFunctions();
     }
 
     /**

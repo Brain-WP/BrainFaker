@@ -14,7 +14,7 @@ namespace Brain\Faker\Provider;
 use Brain\Faker\MonkeyWpUser;
 use Brain\Monkey;
 
-class User extends Provider
+class User extends FunctionMockerProvider
 {
     const CAPS = [
         'administrator' => [
@@ -213,18 +213,12 @@ class User extends Provider
     private $currentUserSet = false;
 
     /**
-     * @var bool
-     */
-    private $functionsMocked = false;
-
-    /**
      * @return void
      */
     public function reset(): void
     {
         $this->users = [];
         $this->currentUserSet = false;
-        $this->functionsMocked = false;
         parent::reset();
     }
 
@@ -431,11 +425,11 @@ class User extends Provider
         // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
         // phpcs:enable Generic.Metrics.NestingLevel
 
-        if ($this->functionsMocked) {
+        if (!$this->canMockFunctions()) {
             return;
         }
 
-        $this->monkeyMockFunction('get_userdata')
+        $this->functionExpectations->mock('get_userdata')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($userId = null) { //phpcs:ignore
@@ -447,7 +441,7 @@ class User extends Provider
                 }
             );
 
-        $this->monkeyMockFunction('get_user_by')
+        $this->functionExpectations->mock('get_user_by')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any(), \Mockery::any())
             ->andReturnUsing(
@@ -476,7 +470,7 @@ class User extends Provider
                 }
             );
 
-        $this->monkeyMockFunction('user_can')
+        $this->functionExpectations->mock('user_can')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any(), \Mockery::any())
             ->andReturnUsing(
@@ -495,7 +489,7 @@ class User extends Provider
                 }
             );
 
-        $this->functionsMocked = true;
+        $this->stopMockingFunctions();
     }
 
     /**

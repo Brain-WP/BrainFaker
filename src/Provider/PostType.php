@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-class PostType extends Provider
+class PostType extends FunctionMockerProvider
 {
     public const BUILT_IN = [
         'post' => [
@@ -813,17 +813,11 @@ class PostType extends Provider
     private $types = [];
 
     /**
-     * @var bool
-     */
-    private $functionsMocked = false;
-
-    /**
      * @return void
      */
     public function reset(): void
     {
         $this->types = [];
-        $this->functionsMocked = false;
         parent::reset();
     }
 
@@ -988,13 +982,11 @@ class PostType extends Provider
      */
     private function mockFunctions(): void
     {
-        if ($this->functionsMocked) {
+        if (!$this->canMockFunctions()) {
             return;
         }
 
-        $this->functionsMocked = true;
-
-        $this->monkeyMockFunction('get_post_type_object')
+        $this->functionExpectations->mock('get_post_type_object')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($name) { // phpcs:ignore
@@ -1006,12 +998,14 @@ class PostType extends Provider
                 }
             );
 
-        $this->monkeyMockFunction('post_type_exists')
+        $this->functionExpectations->mock('post_type_exists')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($name) { // phpcs:ignore
                     return is_scalar($name) && array_key_exists($name, $this->types);
                 }
             );
+
+        $this->stopMockingFunctions();
     }
 }

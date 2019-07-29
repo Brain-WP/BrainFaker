@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-class Site extends Provider
+class Site extends FunctionMockerProvider
 {
     /**
      * @var array[]
@@ -19,17 +19,11 @@ class Site extends Provider
     private $sites = [];
 
     /**
-     * @var bool
-     */
-    private $functionsMocked = false;
-
-    /**
      * @return void
      */
     public function reset(): void
     {
         $this->sites = [];
-        $this->functionsMocked = false;
         parent::reset();
     }
 
@@ -123,13 +117,11 @@ class Site extends Provider
      */
     private function mockFunctions(): void
     {
-        if ($this->functionsMocked) {
+        if (!$this->canMockFunctions()) {
             return;
         }
 
-        $this->functionsMocked = true;
-
-        $this->monkeyMockFunction('get_site')
+        $this->functionExpectations->mock('get_site')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($site = null) { // phpcs:ignore
@@ -140,5 +132,7 @@ class Site extends Provider
                         : null;
                 }
             );
+
+        $this->stopMockingFunctions();
     }
 }

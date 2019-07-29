@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Brain\Faker;
 
+use Brain\Faker\Provider\FunctionMockerProvider;
 use Brain\Faker\Provider\Provider;
 use Brain\Monkey\Expectation\Expectation;
-use Brain\Monkey\Functions;
 use Faker\Generator;
 
 /**
@@ -235,7 +235,7 @@ class Providers
     private $providers = [];
 
     /**
-     * @var \ArrayObject
+     * @var FunctionExpectations
      */
     private $functionExpectations;
 
@@ -245,7 +245,7 @@ class Providers
     public function __construct(Generator $generator)
     {
         $this->generator = $generator;
-        $this->functionExpectations = new \ArrayObject();
+        $this->functionExpectations = new FunctionExpectations();
     }
 
     /**
@@ -381,16 +381,7 @@ class Providers
      */
     public function __monkeyFunction(string $function): Expectation
     {
-        if (isset($this->functionExpectations[$function])) {
-            /** @var Expectation $expectation */
-            $expectation = $this->functionExpectations[$function];
-            /** @noinspection PhpUndefinedMethodInspection */
-            $expectation->byDefault();
-
-            return $expectation->andAlsoExpectIt();
-        }
-
-        return Functions\expect($function);
+        return $this->functionExpectations->replace($function);
     }
 
     /**
@@ -398,7 +389,7 @@ class Providers
      */
     public function __reset(): Providers
     {
-        $this->functionExpectations = new \ArrayObject();
+        $this->functionExpectations->reset();
 
         /** @var Provider $provider */
         foreach ($this->providers as $provider) {
@@ -503,8 +494,12 @@ class Providers
         $class = $isMany ? $this->methods[self::MANY][$method] : $this->methods[self::ONE][$method];
 
         if (empty($this->providers[$class])) {
-            /** @var Provider $provider */
-            $provider = new $class($this->generator, $this->functionExpectations);
+            $isFunctionMocker = is_subclass_of($class, FunctionMockerProvider::class, true);
+            /** @var Provider|FunctionMockerProvider $provider */
+            $provider = $isFunctionMocker
+                ? new $class($this->generator, $this->functionExpectations)
+                : new $class($this->generator);
+
             $this->providers[$class] = $provider;
         }
 

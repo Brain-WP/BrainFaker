@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-class Term extends Provider
+class Term extends FunctionMockerProvider
 {
     /**
      * @var array[]
@@ -19,17 +19,11 @@ class Term extends Provider
     private $terms = [];
 
     /**
-     * @var bool
-     */
-    private $functionsMocked = false;
-
-    /**
      * @return void
      */
     public function reset(): void
     {
         $this->terms = [];
-        $this->functionsMocked = false;
         parent::reset();
     }
 
@@ -86,13 +80,11 @@ class Term extends Provider
      */
     private function mockFunctions(): void
     {
-        if ($this->functionsMocked) {
+        if (!$this->canMockFunctions()) {
             return;
         }
 
-        $this->functionsMocked = true;
-
-        $this->monkeyMockFunction('get_term')
+        $this->functionExpectations->mock('get_term')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function (...$args) { //phpcs:ignore
@@ -100,13 +92,15 @@ class Term extends Provider
                 }
             );
 
-        $this->monkeyMockFunction('get_term_by')
+        $this->functionExpectations->mock('get_term_by')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function (...$args) { //phpcs:ignore
                     return $this->mockedGetTermBy(...$args);
                 }
             );
+
+        $this->stopMockingFunctions();
     }
 
     /**

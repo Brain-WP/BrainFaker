@@ -11,23 +11,31 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Tests;
 
+use Brain\Faker\FunctionExpectations;
 use Brain\Faker\Provider\Provider;
 use Faker\Factory;
 
 abstract class ProviderTestCase extends TestCase
 {
+    /**
+     * @var Provider[]
+     */
     private $providers = [];
 
+    /**
+     * @var FunctionExpectations
+     */
     private $functions;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->functions = new \ArrayObject();
+        $this->functions = new FunctionExpectations();
     }
 
     protected function tearDown(): void
     {
+        $this->functions->reset();
         $this->functions = null;
 
         /** @var  Provider$provider */

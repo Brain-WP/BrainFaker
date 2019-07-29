@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-class Taxonomy extends Provider
+class Taxonomy extends FunctionMockerProvider
 {
     public const BUILT_IN = [
         'category' => [
@@ -315,17 +315,11 @@ class Taxonomy extends Provider
     private $taxonomies = [];
 
     /**
-     * @var bool
-     */
-    private $functionsMocked = false;
-
-    /**
      * @return void
      */
     public function reset(): void
     {
         $this->taxonomies = [];
-        $this->functionsMocked = false;
         parent::reset();
     }
 
@@ -498,13 +492,11 @@ class Taxonomy extends Provider
      */
     private function mockFunctions(): void
     {
-        if ($this->functionsMocked) {
+        if (!$this->canMockFunctions()) {
             return;
         }
 
-        $this->functionsMocked = true;
-
-        $this->monkeyMockFunction('get_taxonomy')
+        $this->functionExpectations->mock('get_taxonomy')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($name) { // phpcs:ignore
@@ -516,7 +508,7 @@ class Taxonomy extends Provider
                 }
             );
 
-        $this->monkeyMockFunction('taxonomy_exists')
+        $this->functionExpectations->mock('taxonomy_exists')
             ->zeroOrMoreTimes()
             ->zeroOrMoreTimes()
             ->andReturnUsing(
@@ -524,5 +516,7 @@ class Taxonomy extends Provider
                     return is_scalar($name) && array_key_exists($name, $this->taxonomies);
                 }
             );
+
+        $this->stopMockingFunctions();
     }
 }
