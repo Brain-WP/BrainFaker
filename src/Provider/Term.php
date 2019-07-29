@@ -92,62 +92,97 @@ class Term extends Provider
 
         $this->functionsMocked = true;
 
-        $getTerm = function ($term, $taxonomy = '', $output = 'OBJECT') {
-            $termId = is_object($term) ? $term->term_id ?? null : $term;
-            if (!$termId || !is_numeric($termId)) {
-                return null;
-            }
-
-            $data = $this->terms[(int)$termId] ?? null;
-            if (!$data || ($taxonomy && $taxonomy !== $data['taxonomy'])) {
-                return null;
-            }
-
-            $termObj = $this->__invoke($data);
-
-            if ($output === 'ARRAY_A') {
-                return $termObj->to_array();
-            } elseif ($output === 'ARRAY_N') {
-                return array_values($termObj->to_array() );
-            }
-
-            return $termObj;
-        };
-
         $this->monkeyMockFunction('get_term')
             ->zeroOrMoreTimes()
-            ->andReturnUsing($getTerm);
+            ->andReturnUsing(
+                function (...$args) { //phpcs:ignore
+                    return $this->mockedGetTerm(...$args);
+                }
+            );
 
         $this->monkeyMockFunction('get_term_by')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($field, $value, $taxonomy = '', $output = 'OBJECT') use ($getTerm) {
-                    if (!in_array($field, ['id', 'term_taxonomy_id', 'slug', 'name'], true)) {
-                        return false;
-                    }
-
-                    $id = $field === 'id' ? $value : null;
-                    if ($id === null) {
-                        $isTtId = $field === 'term_taxonomy_id';
-                        if (($isTtId && !is_numeric($value))
-                            || (!$isTtId && (!is_string($value) || !$taxonomy))
-                        ) {
-                            return false;
-                        }
-
-                        $isTtId and $value = (int)$value;
-                        if ($field === 'slug') {
-                            $value = preg_replace('/[^a-z0-9_-]/i', '-', strtolower($value));
-                        }
-
-                        $values = array_column($this->terms, $field, 'term_id');
-                        $id = array_search($value, $values, true);
-                    }
-
-                    return $id && is_numeric($id)
-                        ? ($getTerm($id, $taxonomy, $output) ?: false)
-                        : false;
+                function (...$args) { //phpcs:ignore
+                    return $this->mockedGetTermBy(...$args);
                 }
             );
+    }
+
+    /**
+     * @param $term
+     * @param string $taxonomy
+     * @param string $output
+     * @return array|\WP_Term|null
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     */
+    private function mockedGetTerm($term, $taxonomy = '', $output = 'OBJECT')
+    {
+        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
+
+        $termId = is_object($term) ? $term->term_id ?? null : $term;
+        if (!$termId || !is_numeric($termId)) {
+            return null;
+        }
+
+        $data = $this->terms[(int)$termId] ?? null;
+        if (!$data || ($taxonomy && $taxonomy !== $data['taxonomy'])) {
+            return null;
+        }
+
+        $termObj = $this->__invoke($data);
+
+        if ($output === 'ARRAY_A') {
+            return $termObj->to_array();
+        } elseif ($output === 'ARRAY_N') {
+            return array_values($termObj->to_array());
+        }
+
+        return $termObj;
+    }
+
+    /**
+     * @param $field
+     * @param $value
+     * @param string $taxonomy
+     * @param string $output
+     * @return array|\WP_Term|bool
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     */
+    private function mockedGetTermBy($field, $value, $taxonomy = '', $output = 'OBJECT')
+    {
+        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
+
+        if (!in_array($field, ['id', 'term_taxonomy_id', 'slug', 'name'], true)) {
+            return false;
+        }
+
+        $id = $field === 'id' ? $value : null;
+        if ($id === null) {
+            $isTtId = $field === 'term_taxonomy_id';
+            if (($isTtId && !is_numeric($value))
+                || (!$isTtId && (!is_string($value) || !$taxonomy))
+            ) {
+                return false;
+            }
+
+            $isTtId and $value = (int)$value;
+            if ($field === 'slug') {
+                $value = preg_replace('/[^a-z0-9_-]/i', '-', strtolower($value));
+            }
+
+            $values = array_column($this->terms, $field, 'term_id');
+            $id = array_search($value, $values, true);
+        }
+
+        return $id && is_numeric($id)
+            ? ($this->mockedGetTerm($id, $taxonomy, $output) ?: false)
+            : false;
     }
 }

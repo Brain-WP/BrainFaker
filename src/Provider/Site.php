@@ -36,9 +36,13 @@ class Site extends Provider
     /**
      * @param array $properties
      * @return \WP_Site
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
      */
     public function __invoke(array $properties = []): \WP_Site
     {
+        // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
+
         if (function_exists('is_multisite') && !is_multisite()) {
             throw new \Error('WP_Site class is only available in multisite installations.');
         }
@@ -128,7 +132,7 @@ class Site extends Provider
         $this->monkeyMockFunction('get_site')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($site = null) {
+                function ($site = null) { // phpcs:ignore
                     $siteId = is_object($site) ? ($site->blog_id ?? null) : $site;
 
                     return $siteId && is_numeric($siteId) && isset($this->sites[(int)$siteId])

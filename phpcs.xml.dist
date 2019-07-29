@@ -5,6 +5,7 @@
 
     <arg value="sp"/>
 
+    <rule ref="Inpsyde" />
     <rule ref="Inpsyde.CodeQuality.Psr4">
         <properties>
             <property
@@ -13,5 +14,4 @@
                 value="Brain\Faker=>src,Brain\Faker\Tests=>tests/src,Brain\Faker\Tests\Unit=>tests/cases/unit,Brain\Faker\Tests\Functional=>tests/cases/functional"/>
         </properties>
     </rule>
-
 </ruleset>

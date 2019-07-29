@@ -252,9 +252,13 @@ class Providers
      * @param string $method
      * @param array $args
      * @return object|object[]
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
     public function __call(string $method, array $args = [])
     {
+        //phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
+
         $this->bailWhenNotInitialized(sprintf('$faker->wp()->%s', $method));
 
         /**
@@ -304,9 +308,13 @@ class Providers
     /**
      * @param string $method
      * @return mixed
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
     public function __get(string $method)
     {
+        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
+
         return $this->__call($method);
     }
 
@@ -331,7 +339,7 @@ class Providers
         try {
             $reflection = new \ReflectionClass($providerClass);
         } catch (\Throwable $throwable) {
-           $this->bailForInvalidClass($providerClass, $throwable);
+            $this->bailForInvalidClass($providerClass, $throwable);
         }
 
         /** \ReflectionClass $reflection */

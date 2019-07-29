@@ -175,7 +175,7 @@ class Taxonomy extends Provider
             'show_admin_column' => false,
             'meta_box_cb' => 'post_tags_meta_box',
             'meta_box_sanitize_cb' => 'taxonomy_meta_box_sanitize_cb_input',
-            'object_type' => ['nav_menu_item',],
+            'object_type' => ['nav_menu_item'],
             'cap' => [
                 'manage_terms' => 'manage_categories',
                 'edit_terms' => 'manage_categories',
@@ -231,7 +231,7 @@ class Taxonomy extends Provider
             'show_admin_column' => false,
             'meta_box_cb' => 'post_tags_meta_box',
             'meta_box_sanitize_cb' => 'taxonomy_meta_box_sanitize_cb_input',
-            'object_type' => ['link',],
+            'object_type' => ['link'],
             'cap' => [
                 'manage_terms' => 'manage_links',
                 'edit_terms' => 'manage_links',
@@ -287,7 +287,7 @@ class Taxonomy extends Provider
             'show_admin_column' => false,
             'meta_box_cb' => 'post_tags_meta_box',
             'meta_box_sanitize_cb' => 'taxonomy_meta_box_sanitize_cb_input',
-            'object_type' => ['post',],
+            'object_type' => ['post'],
             'cap' => [
                 'manage_terms' => 'manage_categories',
                 'edit_terms' => 'manage_categories',
@@ -507,7 +507,7 @@ class Taxonomy extends Provider
         $this->monkeyMockFunction('get_taxonomy')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($name) {
+                function ($name) { // phpcs:ignore
                     if (!is_scalar($name) || !isset($this->taxonomies[$name])) {
                         return null;
                     }
@@ -520,7 +520,7 @@ class Taxonomy extends Provider
             ->zeroOrMoreTimes()
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($name) {
+                function ($name) { // phpcs:ignore
                     return is_scalar($name) && array_key_exists($name, $this->taxonomies);
                 }
             );

@@ -37,7 +37,8 @@ abstract class Provider
      * @param Generator $generator
      * @param ArrayObject $functionExpectations
      */
-    final public function __construct(Generator $generator, ArrayObject $functionExpectations) {
+    final public function __construct(Generator $generator, ArrayObject $functionExpectations)
+    {
         $this->generator = $generator;
         $this->uniqueGenerator = $generator->unique(true);
         $this->functionExpectations = $functionExpectations;

@@ -14,6 +14,10 @@ namespace Brain\Faker;
 use Faker\Factory as FakerFactory;
 use Faker\Generator;
 
+/**
+ * @phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.GeneratorReturnTypeWithoutYield
+ * @phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.InvalidGeneratorManyReturns
+ */
 class Generators
 {
     private const PROVIDERS = [

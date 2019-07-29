@@ -231,9 +231,13 @@ class User extends Provider
     /**
      * @param array $properties
      * @return \WP_User|MonkeyWpUser
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
      */
     public function __invoke(array $properties = []): \WP_User
     {
+        // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
+
         $properties = array_change_key_case($properties, CASE_LOWER);
 
         $user = $this->createBaseUser($properties);
@@ -335,7 +339,7 @@ class User extends Provider
 
         $user->shouldReceive('get')
             ->andReturnUsing(
-                function ($key) use ($get) {
+                function ($key) use ($get) { //phpcs:ignore
                     if (strtoupper($key) === 'ID' && $key !== 'ID') {
                         throw new \Error('Please use `WP_User::ID` instead of `WP_User::id`.');
                     }
@@ -357,7 +361,7 @@ class User extends Provider
         $user->shouldReceive('__monkeyMakeCurrent')
             ->withNoArgs()
             ->andReturnUsing(
-                function () use (&$user) {
+                function () use (&$user) { //phpcs:ignore
                     $this->makeCurrent($user);
 
                     return $user;
@@ -370,80 +374,20 @@ class User extends Provider
     /**
      * @param array $properties
      * @return \Mockery\MockInterface|\WP_User
-     * @throws \Exception
      */
     private function createBaseUser(array $properties): \Mockery\MockInterface
     {
+        [$userRoles, $allCaps, $userCaps, $level] = $this->extractRolesAndCapabilities($properties);
+
         $id = array_key_exists('id', $properties)
             ? $properties['id']
             : $this->uniqueGenerator->numberBetween(1, 99999999);
-
-        $role = $properties['role'] ?? null;
-        $roles = $properties['roles'] ?? null;
-        $level = $properties['user_level'] ?? $properties['level'] ?? null;
-        $caps = $properties['allcaps']
-            ?? $properties['caps']
-            ?? $properties['capabilities']
-            ?? null;
-
-        $rawRoles = is_array($roles) ? $roles : [];
-        ($role && is_string($role)) and $rawRoles[] = $role;
-
-        $userRoles = [];
-        foreach ($rawRoles as $rawRole) {
-            if ($rawRole && is_string($rawRole) && !in_array($rawRole, $userRoles, true)) {
-                $userRoles[] = $rawRole;
-            }
-        }
-
-        if (is_numeric($level) && !$userRoles) {
-            $foundLevels = [];
-            $level = min(max((int)$level, 0), 10);
-            foreach (self::LEVELS as $levelRole => $roleLevel) {
-                ($level >= $roleLevel) and $foundLevels[$roleLevel] = $levelRole;
-            }
-            if ($foundLevels) {
-                ksort($foundLevels, SORT_NUMERIC);
-                $userRoles[] = end($foundLevels);
-            }
-        }
-
-        if (!$userRoles) {
-            $roleKeys = $this->generator->randomElements(array_keys(self::CAPS), 3);
-            foreach ($roleKeys as $roleKey) {
-                $userRoles[] = $roleKey;
-            }
-        }
-
-        $hasCaps = is_array($caps);
-        [$caps, $userCaps] = $this->prepareCapabilities(
-            $userRoles,
-            $hasCaps ? $caps : [],
-            $hasCaps
-        );
-
-        if (!is_numeric($level)) {
-            $level = null;
-            foreach ($userRoles as $role) {
-                $level = $level === null
-                    ? (int)(self::LEVELS[$role] ?? 0)
-                    : (int)max($level, self::LEVELS[$role] ?? 0);
-            }
-
-            $level === null and $level = $this->generator->numberBetween(0, 10);
-        }
-
-        $level = min(max((int)$level, 0), 10);
-
-        for ($i = 0; $i <= $level; $i++) {
-            array_key_exists("level_{$i}", $caps) or $caps["level_{$i}"] = true;
-        }
 
         $user = \Mockery::mock(\WP_User::class);
         $user->ID = (int)$id;
         $user->roles = $userRoles;
         $user->caps = $userCaps;
-        $user->allcaps = $caps;
+        $user->allcaps = $allCaps;
         $user->user_level = (int)$level;
 
         $user->shouldReceive('exists')->andReturn($id > 0)->byDefault();
@@ -451,8 +395,8 @@ class User extends Provider
         $user->shouldReceive('has_cap')
             ->with(\Mockery::type('string'))
             ->andReturnUsing(
-                function ($cap) use ($caps) {
-                    return !empty($caps[$cap]);
+                function ($cap) use ($allCaps) { //phpcs:ignore
+                    return !empty($allCaps[$cap]);
                 }
             )
             ->byDefault();
@@ -478,9 +422,15 @@ class User extends Provider
 
     /**
      * @return void
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     * phpcs:disable Generic.Metrics.NestingLevel
      */
     private function mockFunctions(): void
     {
+        // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
+        // phpcs:enable Generic.Metrics.NestingLevel
+
         if ($this->functionsMocked) {
             return;
         }
@@ -488,7 +438,7 @@ class User extends Provider
         $this->monkeyMockFunction('get_userdata')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($userId = null) {
+                function ($userId = null) { //phpcs:ignore
                     if (!is_numeric($userId) || !array_key_exists((int)$userId, $this->users)) {
                         return false;
                     }
@@ -501,21 +451,21 @@ class User extends Provider
             ->zeroOrMoreTimes()
             ->with(\Mockery::any(), \Mockery::any())
             ->andReturnUsing(
-                function ($by, $field) {
-                    if (!in_array($by, ['id', 'ID', 'slug', 'email', 'login'])) {
+                function ($field, $value) { //phpcs:ignore
+                    if (!in_array($field, ['id', 'ID', 'slug', 'email', 'login'], true)) {
                         return false;
                     }
 
-                    $byId = $by === 'id' || $by === 'ID';
-                    $id = $byId ? $field : null;
+                    $byId = $field === 'id' || $field === 'ID';
+                    $id = $byId ? $value : null;
                     if (!$byId) {
-                        if (!is_string($field)) {
+                        if (!is_string($value)) {
                             return false;
                         }
 
-                        $fieldName = $by === 'slug' ? 'nicename' : $by;
+                        $fieldName = $field === 'slug' ? 'nicename' : $field;
                         $fields = array_column($this->users, "user_{$fieldName}", 'ID');
-                        $id = array_search($field, $fields, true);
+                        $id = array_search($value, $fields, true);
                     }
 
                     if (!is_numeric($id) || !array_key_exists((int)$id, $this->users)) {
@@ -530,7 +480,7 @@ class User extends Provider
             ->zeroOrMoreTimes()
             ->with(\Mockery::any(), \Mockery::any())
             ->andReturnUsing(
-                function ($user = null, $cap = null) {
+                function ($user = null, $cap = null) { // phpcs:ignore
                     $userId = is_object($user) ? $user->ID : $user;
                     if (!is_numeric($userId)
                         || !is_scalar($cap)
@@ -563,6 +513,71 @@ class User extends Provider
         Monkey\Functions\when('get_current_user_id')->justReturn($user->ID);
         Monkey\Functions\when('wp_get_current_user')->justReturn($user);
         Monkey\Functions\when('current_user_can')->alias([$user, 'has_cap']);
+    }
+
+    /**
+     * @param array $properties
+     * @return array
+     */
+    private function extractRolesAndCapabilities(array $properties): array
+    {
+        $role = $properties['role'] ?? null;
+        $roles = $properties['roles'] ?? null;
+        $level = $properties['user_level'] ?? $properties['level'] ?? null;
+        $allCaps = $properties['allcaps']
+            ?? $properties['caps']
+            ?? $properties['capabilities']
+            ?? null;
+
+        $rawRoles = is_array($roles) ? $roles : [];
+        ($role && is_string($role)) and $rawRoles[] = $role;
+
+        $userRoles = [];
+        foreach ($rawRoles as $rawRole) {
+            is_string($rawRole) and $userRoles[] = $rawRole;
+        }
+
+        if (is_numeric($level) && !$userRoles) {
+            $foundLevels = [];
+            $level = min(max((int)$level, 0), 10);
+            foreach (self::LEVELS as $levelRole => $roleLevel) {
+                ($level >= $roleLevel) and $foundLevels[$roleLevel] = $levelRole;
+            }
+            if ($foundLevels) {
+                ksort($foundLevels, SORT_NUMERIC);
+                $userRoles[] = end($foundLevels);
+            }
+        }
+
+        if (!$userRoles) {
+            $userRoles = $this->generator->randomElements(array_keys(self::CAPS), 3);
+        }
+
+        $hasCaps = is_array($allCaps);
+        [$allCaps, $userCaps] = $this->prepareCapabilities(
+            $userRoles,
+            $hasCaps ? $allCaps : [],
+            $hasCaps
+        );
+
+        if (!is_numeric($level)) {
+            $level = null;
+            foreach ($userRoles as $role) {
+                $level = $level === null
+                    ? (int)(self::LEVELS[$role] ?? 0)
+                    : (int)max($level, self::LEVELS[$role] ?? 0);
+            }
+
+            $level === null and $level = $this->generator->numberBetween(0, 10);
+        }
+
+        $level = min(max((int)$level, 0), 10);
+
+        for ($i = 0; $i <= $level; $i++) {
+            array_key_exists("level_{$i}", $allCaps) or $allCaps["level_{$i}"] = true;
+        }
+
+        return [array_unique(array_filter($userRoles)), $allCaps, $userCaps, $level];
     }
 
     /**

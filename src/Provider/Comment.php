@@ -26,8 +26,8 @@ class Comment extends Provider
      * @param array $properties
      * @return \WP_Comment
      */
-    public function __invoke(array $properties = []): \WP_Comment {
-
+    public function __invoke(array $properties = []): \WP_Comment
+    {
         $keysMap = [
             'comment_post_id' => 'comment_post_ID',
             'comment_author_ip' => 'comment_author_IP',

@@ -125,7 +125,7 @@ class TermTest extends ProviderTestCase
         static::assertSame($ids, array_unique($ids));
     }
 
-    public function testFunctionsForManyUsers()
+    public function testFunctionsForManyTerms()
     {
         /** @var Provider\Term $factory */
         $factory = $this->factoryProvider(Provider\Term::class);

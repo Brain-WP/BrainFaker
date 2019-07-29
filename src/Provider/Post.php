@@ -73,9 +73,13 @@ class Post extends Provider
     /**
      * @param array $properties
      * @return \WP_Post
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
      */
     public function __invoke(array $properties = []): \WP_Post
     {
+        // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
+
         $zone = $this->generator->timezone;
 
         $properties = array_change_key_case($properties, CASE_LOWER);
@@ -188,7 +192,7 @@ class Post extends Provider
             ->zeroOrMoreTimes()
             ->with(\Mockery::any())
             ->andReturnUsing(
-                function ($post) {
+                function ($post) { // phpcs:ignore
                     $postId = is_object($post) ? $post->ID : $post;
                     if (!$postId || !is_numeric($postId)) {
                         return false;
@@ -203,7 +207,7 @@ class Post extends Provider
         $this->monkeyMockFunction('get_post_field')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($field = null, $post = null) {
+                function ($field = null, $post = null) { // phpcs:ignore
                     $postId = is_object($post) ? $post->ID : $post;
                     if (!$postId || !is_numeric($postId) || !is_string($field)) {
                         return '';
@@ -247,11 +251,6 @@ class Post extends Provider
 
             $hasAltDateKey = array_key_exists("post_{$altKey}", $original);
             if ($hasAltDateKey || array_key_exists($altKey, $original)) {
-                if (!$hasAltDateKey) {
-                    $properties["post_{$altKey}"] = $properties[$altKey];
-                    unset($properties[$key]);
-                }
-
                 continue;
             }
 
@@ -275,10 +274,13 @@ class Post extends Provider
      * @param $date
      * @param string|null $zone
      * @return string
-     * @throws \Exception
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
      */
     private function formatDate($date, ?string $zone = null): string
     {
+        // phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+
         if ($date instanceof \DateTimeInterface) {
             return $date->format(self::DATE_FORMAT);
         }
@@ -320,7 +322,7 @@ class Post extends Provider
         if ($listItems) {
             $listTag = $this->generator->randomElement(['ul', 'ol']);
             $list .= "<{$listTag}>";
-            for ($u = 0; $u < $listItems; $u++) {
+            for ($listI = 0; $listI < $listItems; $listI++) {
                 $list .= "\n<li>";
                 $list .= $this->generator->sentence($this->generator->numberBetween(1, 3));
                 $list .= "<li>";

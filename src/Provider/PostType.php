@@ -997,7 +997,7 @@ class PostType extends Provider
         $this->monkeyMockFunction('get_post_type_object')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($name) {
+                function ($name) { // phpcs:ignore
                     if (!is_scalar($name) || !isset($this->types[$name])) {
                         return null;
                     }
@@ -1009,7 +1009,7 @@ class PostType extends Provider
         $this->monkeyMockFunction('post_type_exists')
             ->zeroOrMoreTimes()
             ->andReturnUsing(
-                function ($name) {
+                function ($name) { // phpcs:ignore
                     return is_scalar($name) && array_key_exists($name, $this->types);
                 }
             );
