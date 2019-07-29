@@ -81,7 +81,7 @@ class Comment extends Provider
             $comment->{$mappedKey} = $field;
         }
 
-        $comment->shouldReceive('to_array')->andReturn($toArray);
+        $comment->shouldReceive('to_array')->andReturn($toArray)->byDefault();
 
         return $comment;
     }

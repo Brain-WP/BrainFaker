@@ -16,14 +16,6 @@ use Brain\Monkey;
 
 class User extends Provider
 {
-    public const ROLES = [
-        'administrator',
-        'editor',
-        'author',
-        'contributor',
-        'subscriber',
-    ];
-
     const CAPS = [
         'administrator' => [
             'switch_themes',
@@ -211,8 +203,34 @@ class User extends Provider
     ];
 
     /**
+     * @var array[]
+     */
+    private $users = [];
+
+    /**
+     * @var bool
+     */
+    private $currentUserSet = false;
+
+    /**
+     * @var bool
+     */
+    private $functionsMocked = false;
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->users = [];
+        $this->currentUserSet = false;
+        $this->functionsMocked = false;
+        parent::reset();
+    }
+
+    /**
      * @param array $properties
-     * @return \WP_User
+     * @return \WP_User|MonkeyWpUser
      */
     public function __invoke(array $properties = []): \WP_User
     {
@@ -226,13 +244,13 @@ class User extends Provider
             'user_description' => 'description',
         ];
 
-        $login = $this->generator->userName;
+        $login = $this->uniqueGenerator->userName;
 
         $defaults = [
             'user_login' => $login,
             'user_pass' => $this->generator->password,
             'user_nicename' => preg_replace('/[^a-z0-9-]/', '-', strtolower($login)),
-            'user_email' => $this->generator->email,
+            'user_email' => $this->uniqueGenerator->email,
             'user_url' => 'https://' . $this->generator->domainName,
             'user_registered' => $this->generator->date('Y-m-d H:i:s'),
             'user_activation_key' => rand(1, 100) > 80 ? $this->generator->password(32) : '',
@@ -327,42 +345,20 @@ class User extends Provider
             )
             ->byDefault();
 
-        Monkey\Functions\expect('get_userdata')
-            ->zeroOrMoreTimes()
-            ->with(\Mockery::anyOf($user->ID, (string)$user->ID))
-            ->andReturn($user);
+        $siteId = $properties['site_id']
+            ?? $properties['blog_id']
+            ?? (rand(1, 100) > 80 ? $this->generator->numberBetween(1, 10) : 1);
 
-        Monkey\Functions\expect('get_user_by')
-            ->zeroOrMoreTimes()
-            ->with(\Mockery::anyOf('id', 'ID'), \Mockery::anyOf($user->ID, (string)$user->ID))
-            ->andReturn($user);
-
-        Monkey\Functions\expect('get_user_by')
-            ->zeroOrMoreTimes()
-            ->with('slug', $user->user_nicename)
-            ->andReturn($user);
-
-        Monkey\Functions\expect('get_user_by')
-            ->zeroOrMoreTimes()
-            ->with('email', $user->user_email)
-            ->andReturn($user);
-
-        Monkey\Functions\expect('get_user_by')
-            ->zeroOrMoreTimes()
-            ->with('login', $user->user_login)
-            ->andReturn($user);
-
-        $siteId = rand(1, 100) > 80 ? $this->generator->numberBetween(1, 10) : 1;
         $user->shouldReceive('get_site_id')->andReturn($siteId)->byDefault();
 
+        $this->saveUser($get, (int)$siteId, $user);
+        $this->mockFunctions();
+
         $user->shouldReceive('__monkeyMakeCurrent')
-            ->zeroOrMoreTimes()
             ->withNoArgs()
             ->andReturnUsing(
                 function () use (&$user) {
-                    Monkey\Functions\when('get_current_user_id')->justReturn($user->ID);
-                    Monkey\Functions\when('wp_get_current_user')->justReturn($user);
-                    Monkey\Functions\when('current_user_can')->alias([$user, 'has_cap']);
+                    $this->makeCurrent($user);
 
                     return $user;
                 }
@@ -461,16 +457,112 @@ class User extends Provider
             )
             ->byDefault();
 
-        Monkey\Functions\expect('user_can')
+        return $user;
+    }
+
+    /**
+     * @param array $properties
+     * @param int $siteId
+     * @param \WP_User $user
+     */
+    private function saveUser(array $properties, int $siteId, \WP_User $user)
+    {
+        $updatedProps = $properties;
+        $updatedProps['site_id'] = $siteId;
+        $updatedProps['allcaps'] = $user->allcaps;
+        $updatedProps['roles'] = $user->roles;
+        $updatedProps['user_level'] = $user->user_level;
+
+        $this->users[$user->ID] = $updatedProps;
+    }
+
+    /**
+     * @return void
+     */
+    private function mockFunctions(): void
+    {
+        if ($this->functionsMocked) {
+            return;
+        }
+
+        $this->monkeyMockFunction('get_userdata')
             ->zeroOrMoreTimes()
-            ->with(\Mockery::anyOf($user, $id, (string)$id), \Mockery::any())
             ->andReturnUsing(
-                function ($user, $cap) use ($caps, $id) {
+                function ($userId = null) {
+                    if (!is_numeric($userId) || !array_key_exists((int)$userId, $this->users)) {
+                        return false;
+                    }
+
+                    return $this->__invoke($this->users[(int)$userId]);
+                }
+            );
+
+        $this->monkeyMockFunction('get_user_by')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any(), \Mockery::any())
+            ->andReturnUsing(
+                function ($by, $field) {
+                    if (!in_array($by, ['id', 'ID', 'slug', 'email', 'login'])) {
+                        return false;
+                    }
+
+                    $byId = $by === 'id' || $by === 'ID';
+                    $id = $byId ? $field : null;
+                    if (!$byId) {
+                        if (!is_string($field)) {
+                            return false;
+                        }
+
+                        $fieldName = $by === 'slug' ? 'nicename' : $by;
+                        $fields = array_column($this->users, "user_{$fieldName}", 'ID');
+                        $id = array_search($field, $fields, true);
+                    }
+
+                    if (!is_numeric($id) || !array_key_exists((int)$id, $this->users)) {
+                        return false;
+                    }
+
+                    return $this->__invoke($this->users[(int)$id]);
+                }
+            );
+
+        $this->monkeyMockFunction('user_can')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any(), \Mockery::any())
+            ->andReturnUsing(
+                function ($user = null, $cap = null) {
+                    $userId = is_object($user) ? $user->ID : $user;
+                    if (!is_numeric($userId)
+                        || !is_scalar($cap)
+                        || !array_key_exists((int)$userId, $this->users)
+                    ) {
+                        return false;
+                    }
+
+                    $caps = $this->users[(int)$userId]['allcaps'];
+
                     return !empty($caps[$cap]);
                 }
             );
 
-        return $user;
+        $this->functionsMocked = true;
+    }
+
+    /**
+     * @param \WP_User $user
+     * @return void
+     */
+    private function makeCurrent(\WP_User $user): void
+    {
+        if ($this->currentUserSet) {
+            throw new \Error('Only one user can be made the current one.');
+        }
+
+        $this->currentUserSet = true;
+
+        Monkey\Functions\when('get_current_user_id')->justReturn($user->ID);
+        Monkey\Functions\when('wp_get_current_user')->justReturn($user);
+        Monkey\Functions\when('current_user_can')->alias([$user, 'has_cap']);
     }
 
     /**

@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Brain\Faker;
 
 use Brain\Faker\Provider\Provider;
+use Brain\Monkey\Expectation\Expectation;
+use Brain\Monkey\Functions;
 use Faker\Generator;
 
 /**
@@ -27,18 +29,18 @@ use Faker\Generator;
  * @method \WP_Post[] atMostThreePosts(array $data = [])
  * @method \WP_Post[] atMostFourPosts(array $data = [])
  * @method \WP_Post[] atMostFivePosts(array $data = [])
- * @method MonkeyWpUser user(array $data = [])
- * @method MonkeyWpUser[] users(int $howMany, array $data = [])
- * @method MonkeyWpUser[] atLeastOneUser(array $data = [])
- * @method MonkeyWpUser[] atLeastTwoUsers(array $data = [])
- * @method MonkeyWpUser[] atLeastThreeUsers(array $data = [])
- * @method MonkeyWpUser[] atLeastFourUsers(array $data = [])
- * @method MonkeyWpUser[] atLeastFiveUsers(array $data = [])
- * @method MonkeyWpUser[] atMostOneUser(array $data = [])
- * @method MonkeyWpUser[] atMostTwoUsers(array $data = [])
- * @method MonkeyWpUser[] atMostThreeUsers(array $data = [])
- * @method MonkeyWpUser[] atMostFourUsers(array $data = [])
- * @method MonkeyWpUser[] atMostFiveUsers(array $data = [])
+ * @method MonkeyWpUser|\WP_User user(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] users(int $howMany, array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atLeastOneUser(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atLeastTwoUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atLeastThreeUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atLeastFourUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atLeastFiveUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atMostOneUser(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atMostTwoUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atMostThreeUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atMostFourUsers(array $data = [])
+ * @method MonkeyWpUser[]|\WP_User[] atMostFiveUsers(array $data = [])
  * @method \WP_Comment comment(array $data = [])
  * @method \WP_Comment[] comments(int $howMany, array $data = [])
  * @method \WP_Comment[] atLeastOneComment(array $data = [])
@@ -124,18 +126,18 @@ use Faker\Generator;
  * @property \WP_Post[] atMostThreePosts
  * @property \WP_Post[] atMostFourPosts
  * @property \WP_Post[] atMostFivePosts
- * @property MonkeyWpUser user
- * @property MonkeyWpUser[] users
- * @property MonkeyWpUser[] atLeastOneUser
- * @property MonkeyWpUser[] atLeastTwoUsers
- * @property MonkeyWpUser[] atLeastThreeUsers
- * @property MonkeyWpUser[] atLeastFourUsers
- * @property MonkeyWpUser[] atLeastFiveUsers
- * @property MonkeyWpUser[] atMostOneUser
- * @property MonkeyWpUser[] atMostTwoUsers
- * @property MonkeyWpUser[] atMostThreeUsers
- * @property MonkeyWpUser[] atMostFourUsers
- * @property MonkeyWpUser[] atMostFiveUsers
+ * @property MonkeyWpUser|\WP_User user
+ * @property MonkeyWpUser[]|\WP_User[] users
+ * @property MonkeyWpUser[]|\WP_User[] atLeastOneUser
+ * @property MonkeyWpUser[]|\WP_User[] atLeastTwoUsers
+ * @property MonkeyWpUser[]|\WP_User[] atLeastThreeUsers
+ * @property MonkeyWpUser[]|\WP_User[] atLeastFourUsers
+ * @property MonkeyWpUser[]|\WP_User[] atLeastFiveUsers
+ * @property MonkeyWpUser[]|\WP_User[] atMostOneUser
+ * @property MonkeyWpUser[]|\WP_User[] atMostTwoUsers
+ * @property MonkeyWpUser[]|\WP_User[] atMostThreeUsers
+ * @property MonkeyWpUser[]|\WP_User[] atMostFourUsers
+ * @property MonkeyWpUser[]|\WP_User[] atMostFiveUsers
  * @property \WP_Comment comment
  * @property \WP_Comment[] comments
  * @property \WP_Comment[] atLeastOneComment
@@ -233,11 +235,17 @@ class Providers
     private $providers = [];
 
     /**
+     * @var \ArrayObject
+     */
+    private $functionExpectations;
+
+    /**
      * @param Generator $generator
      */
     public function __construct(Generator $generator)
     {
         $this->generator = $generator;
+        $this->functionExpectations = new \ArrayObject();
     }
 
     /**
@@ -360,6 +368,39 @@ class Providers
     }
 
     /**
+     * @param string $function
+     * @return Expectation
+     */
+    public function __monkeyFunction(string $function): Expectation
+    {
+        if (isset($this->functionExpectations[$function])) {
+            /** @var Expectation $expectation */
+            $expectation = $this->functionExpectations[$function];
+            /** @noinspection PhpUndefinedMethodInspection */
+            $expectation->byDefault();
+
+            return $expectation->andAlsoExpectIt();
+        }
+
+        return Functions\expect($function);
+    }
+
+    /**
+     * @return Providers
+     */
+    public function __reset(): Providers
+    {
+        $this->functionExpectations = new \ArrayObject();
+
+        /** @var Provider $provider */
+        foreach ($this->providers as $provider) {
+            $provider->reset();
+        }
+
+        return $this;
+    }
+
+    /**
      * @return Providers
      */
     public function wp(): Providers
@@ -454,7 +495,9 @@ class Providers
         $class = $isMany ? $this->methods[self::MANY][$method] : $this->methods[self::ONE][$method];
 
         if (empty($this->providers[$class])) {
-            $this->providers[$class] = new $class($this->generator);
+            /** @var Provider $provider */
+            $provider = new $class($this->generator, $this->functionExpectations);
+            $this->providers[$class] = $provider;
         }
 
         return [$this->providers[$class], $isMany];

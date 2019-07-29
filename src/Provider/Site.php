@@ -11,10 +11,28 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-use Brain\Monkey;
-
 class Site extends Provider
 {
+    /**
+     * @var array[]
+     */
+    private $sites = [];
+
+    /**
+     * @var bool
+     */
+    private $functionsMocked = false;
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->sites = [];
+        $this->functionsMocked = false;
+        parent::reset();
+    }
+
     /**
      * @param array $properties
      * @return \WP_Site
@@ -81,18 +99,42 @@ class Site extends Provider
             'post_count' => $this->generator->numberBetween(0, 9999),
         ];
 
+        $data = $toArray;
+
         foreach ($details as $key => $value) {
             $field = array_key_exists($key, $properties) ? $properties[$key] : $value;
             $site->{$key} = $field;
+            $data[$key] = $field;
         }
 
-        $site->shouldReceive('to_array')->andReturn($toArray);
-
-        Monkey\Functions\expect('get_site')
-            ->zeroOrMoreTimes()
-            ->with(\Mockery::anyOf($site->blog_id, (int)$site->blog_id))
-            ->andReturn($site);
+        $site->shouldReceive('to_array')->andReturn($toArray)->byDefault();
+        $this->sites[$site->blog_id] = $data;
+        $this->mockFunctions();
 
         return $site;
+    }
+
+    /**
+     * @return void
+     */
+    private function mockFunctions(): void
+    {
+        if ($this->functionsMocked) {
+            return;
+        }
+
+        $this->functionsMocked = true;
+
+        $this->monkeyMockFunction('get_site')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($site = null) {
+                    $siteId = is_object($site) ? ($site->blog_id ?? null) : $site;
+
+                    return $siteId && is_numeric($siteId) && isset($this->sites[(int)$siteId])
+                        ? $this->__invoke($this->sites[(int)$siteId])
+                        : null;
+                }
+            );
     }
 }

@@ -10,7 +10,7 @@ namespace Brain\Faker;
 class MonkeyWpUser
 {
     /**
-     * @return \WP_User|\Mockery\MockInterface
+     * @return \WP_User|\Mockery\MockInterface|MonkeyWpUser|MonkeyFunctionAllowed
      */
     public function __monkeyMakeCurrent()
     {

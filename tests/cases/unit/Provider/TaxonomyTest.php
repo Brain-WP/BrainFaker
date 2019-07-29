@@ -58,7 +58,12 @@ class TaxonomyTest extends ProviderTestCase
         static::assertTrue(is_null($cb_upd) || is_callable($cb_upd, true));
 
         static::assertTrue($taxonomy->_builtin);
-        static::assertSame($taxonomy, get_taxonomy($taxonomy->name));
+
+        static::assertInstanceOf(\WP_Taxonomy::class, get_taxonomy($taxonomy->name) );
+        static::assertSame($taxonomy->name, get_taxonomy($taxonomy->name)->name);
+        static::assertEquals($taxonomy->labels, get_taxonomy($taxonomy->name)->labels);
+        static::assertEquals($taxonomy->cap, get_taxonomy($taxonomy->name)->cap);
+        static::assertSame($taxonomy->rewrite, get_taxonomy($taxonomy->name)->rewrite);
         static::assertTrue(taxonomy_exists($taxonomy->name));
     }
 
@@ -132,5 +137,29 @@ class TaxonomyTest extends ProviderTestCase
         static::assertTrue($tax->show_in_rest);
         static::assertTrue($tax->show_ui);
         static::assertFalse($tax->_builtin);
+    }
+
+    public function testFunctionWithMultipleObjects()
+    {
+        /** @var Provider\Taxonomy $factory */
+        $factory = $this->factoryProvider(Provider\Taxonomy::class);
+
+        $taxonomies = [];
+        for ($i = 0; $i < 50; $i++) {
+            $taxonomies[] = $factory();
+        }
+
+        /** @var \WP_Taxonomy $taxonomy */
+        foreach ($taxonomies as $taxonomy) {
+            /** @var \WP_Taxonomy $compare */
+            $compare = get_taxonomy($taxonomy->name);
+            static::assertInstanceOf(\WP_Taxonomy::class, $compare);
+            static::assertSame($taxonomy->name, $compare->name);
+            static::assertSame($taxonomy->label, $compare->label);
+            static::assertSame($taxonomy->rewrite, $compare->rewrite);
+            static::assertSame($taxonomy->description, $compare->description);
+            static::assertEquals($taxonomy->labels, $compare->labels);
+            static::assertEquals($taxonomy->cap, $compare->cap);
+        }
     }
 }

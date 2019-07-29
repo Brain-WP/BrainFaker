@@ -127,20 +127,43 @@ class UserTest extends ProviderTestCase
         $factory = $this->factoryProvider(Provider\User::class);
         $user = $factory();
 
-        static::assertSame($user, get_userdata($user->ID));
-        static::assertNull(get_userdata($user->ID + 1));
-        static::assertSame($user, get_user_by('ID', $user->ID));
-        static::assertSame($user, get_user_by('id', $user->ID));
-        static::assertSame($user, get_user_by('ID', (string)$user->ID));
-        static::assertSame($user, get_user_by('id', (string)$user->ID));
-        static::assertNull(get_user_by('id', $user->ID + 1));
-        static::assertSame($user, get_user_by('slug', $user->user_nicename));
-        static::assertNull(get_user_by('slug', 'x' . $user->user_nicename));
-        static::assertSame($user, get_user_by('email', $user->user_email));
-        static::assertNull(get_user_by('email', $user->user_email . 'x'));
-        static::assertSame($user, get_user_by('login', $user->user_login));
-        static::assertNull(get_user_by('login', 'x' . $user->user_login));
-        static::assertNull(get_user_by('login ', $user->user_login));
+        $this->compareUser($user, get_userdata($user->ID));
+        $this->compareUser($user, get_user_by('ID', $user->ID));
+        $this->compareUser($user, get_user_by('id', $user->ID));
+        $this->compareUser($user, get_user_by('ID', (string)$user->ID));
+        $this->compareUser($user, get_user_by('id', (string)$user->ID));
+        $this->compareUser($user, get_user_by('slug', $user->user_nicename));
+        $this->compareUser($user, get_user_by('email', $user->user_email));
+        $this->compareUser($user, get_user_by('login', $user->user_login));
+
+        static::assertFalse(get_userdata($user->ID + 1));
+        static::assertFalse(get_user_by('id', $user->ID + 1));
+        static::assertFalse(get_user_by('slug', 'x' . $user->user_nicename));
+        static::assertFalse(get_user_by('email', $user->user_email . 'x'));
+        static::assertFalse(get_user_by('login', 'x' . $user->user_login));
+        static::assertFalse(get_user_by('login ', $user->user_login));
+    }
+
+    public function testFunctionsForManyUsers()
+    {
+        /** @var Provider\User $factory */
+        $factory = $this->factoryProvider(Provider\User::class);
+
+        $users = [];
+        for ($i = 0; $i < 1000; $i++) {
+            $users[] = $factory();
+        }
+
+        $ids = [];
+        /** @var \WP_User $user */
+        foreach ($users as $user) {
+            $ids[] = $user->ID;
+            $this->compareUser($user, get_userdata($user->ID));
+            $this->compareUser($user, get_user_by('slug', $user->user_nicename));
+        }
+
+        $badId = (int)(max($ids) + 1);
+        static::assertFalse(get_userdata($badId));
     }
 
     public function testFixedData()
@@ -278,5 +301,19 @@ class UserTest extends ProviderTestCase
                 wp_safe_redirect($user->user_url);
             }
         }
+    }
+
+    /**
+     * @param \WP_User $left
+     * @param \WP_User $right
+     */
+    private function compareUser($left, $right): void
+    {
+        static::assertInstanceOf(\WP_User::class, $left);
+        static::assertInstanceOf(\WP_User::class, $right);
+        static::assertSame($left->to_array(), $right->to_array());
+        static::assertSame($left->allcaps, $right->allcaps);
+        static::assertSame($left->caps, $right->caps);
+        static::assertSame($left->roles, $right->roles);
     }
 }

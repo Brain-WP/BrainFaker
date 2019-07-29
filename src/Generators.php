@@ -28,7 +28,7 @@ class Generators
     ];
 
     /**
-     * @var array<Generator>
+     * @var array<array{0:Generator, 1:Providers}>
      */
     private static $generators = [];
 
@@ -52,7 +52,7 @@ class Generators
     ): Generator {
 
         if (array_key_exists($locale, static::$generators)) {
-            return static::$generators[$locale];
+            return static::$generators[$locale][0];
         }
 
         $provider = new Providers($faker);
@@ -63,7 +63,7 @@ class Generators
 
         $faker->addProvider($provider);
 
-        static::$generators[$locale] = $faker;
+        static::$generators[$locale] = [$faker, $provider];
 
         return $faker;
     }
@@ -73,6 +73,15 @@ class Generators
      */
     public static function reset(): void
     {
+        /**
+         * @var Generator $generator
+         * @var Providers $providers
+         */
+        foreach (static::$generators as [$generator, $providers]) {
+            $generator->unique(true);
+            $providers->__reset();
+        }
+
         static::$generators = [];
     }
 }

@@ -54,9 +54,16 @@ class BrainFakerTest extends FunctionalTestCase
     public function testPostAndUserNotExists()
     {
         $this->wpFaker->post(['id' => 123, 'author' => 456]);
-        $this->wpFaker->user(['id' => 456, 'role' => 'subscriber'])
-            ->__monkeyMakeCurrent()
-            ->shouldReceive('exists')
+
+        $user = $this->wpFaker->user(['id' => 456, 'role' => 'subscriber'])
+            ->__monkeyMakeCurrent();
+
+        $this->wpFaker->__monkeyFunction('get_userdata')
+            ->once()
+            ->with($user->ID)
+            ->andReturn($user);
+
+        $user->shouldReceive('exists')
             ->once()
             ->andReturn(false);
 
@@ -118,7 +125,7 @@ class BrainFakerTest extends FunctionalTestCase
 
         if ($authorId === get_current_user_id()) {
             $user = get_userdata($authorId);
-            if (!$user->exists()) {
+            if (!$user || !$user->exists()) {
                 return 'Bad user';
             }
 

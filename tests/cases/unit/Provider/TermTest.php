@@ -55,6 +55,7 @@ class TermTest extends ProviderTestCase
         ];
 
         $actualArray = $term->to_array();
+        $arr = $actualArray;
 
         ksort($expectedArray);
         ksort($actualArray);
@@ -63,16 +64,21 @@ class TermTest extends ProviderTestCase
 
         $id = $term->term_id;
         $ttId = $term->term_taxonomy_id;
+        $tax = $term->taxonomy;
 
-        static::assertSame($term, get_term($id, $term->taxonomy));
-        static::assertSame($term, get_term((string)$id, $term->taxonomy));
-        static::assertSame($term, get_term_by('slug', $term->slug, $term->taxonomy));
-        static::assertSame($term, get_term_by('name', $term->name, $term->taxonomy));
-        static::assertSame($term, get_term_by('id', $id, $term->taxonomy));
-        static::assertSame($term, get_term_by('term_taxonomy_id', $ttId, $term->taxonomy));
-        static::assertSame($term, get_term_by('term_taxonomy_id', (string)$ttId, $term->taxonomy));
-        static::assertSame($term, get_term_by('term_taxonomy_id', $ttId));
-        static::assertSame($term, get_term_by('term_taxonomy_id', (string)$ttId));
+        static::assertSame($arr, get_term($id, $tax)->to_array());
+        static::assertSame($arr, get_term((string)$id, $tax)->to_array());
+        static::assertSame($arr, get_term_by('slug', $term->slug, $tax)->to_array());
+        static::assertSame($arr, get_term_by('slug', $term->name, $tax)->to_array());
+        static::assertSame($arr, get_term_by('name', $term->name, $tax)->to_array());
+        static::assertSame($arr, get_term_by('id', $id, $tax)->to_array());
+        static::assertSame($arr, get_term_by('term_taxonomy_id', $ttId, $tax)->to_array());
+        static::assertSame($arr, get_term_by('term_taxonomy_id', (string)$ttId, $tax)->to_array());
+        static::assertSame($arr, get_term_by('term_taxonomy_id', $ttId)->to_array());
+        static::assertSame($arr, get_term_by('term_taxonomy_id', (string)$ttId)->to_array());
+        static::assertFalse(get_term_by('slug', $term->slug));
+        static::assertFalse(get_term_by('name', $term->name));
+        static::assertFalse(get_term_by('name', $term->slug, $tax));
     }
 
     public function testCreateWithFixedId()
@@ -117,5 +123,36 @@ class TermTest extends ProviderTestCase
         }
 
         static::assertSame($ids, array_unique($ids));
+    }
+
+    public function testFunctionsForManyUsers()
+    {
+        /** @var Provider\Term $factory */
+        $factory = $this->factoryProvider(Provider\Term::class);
+
+        $terms = [];
+        for ($i = 0; $i < 1000; $i++) {
+            $terms[] = $factory();
+        }
+
+        $ids = [];
+        /** @var \WP_Term $term */
+        foreach ($terms as $term) {
+            $ids[] = $term->term_id;
+            $arr = $term->to_array();
+            $tax = $term->taxonomy;
+            $ttId = $term->term_taxonomy_id;
+
+            static::assertSame($arr, get_term($term->term_id, $tax)->to_array());
+            static::assertSame($arr, get_term_by('slug', $term->slug, $tax)->to_array());
+            static::assertSame($arr, get_term_by('name', $term->name, $tax)->to_array());
+            static::assertSame($arr, get_term_by('id', $term->term_id, $tax)->to_array());
+            static::assertSame($arr, get_term_by('term_taxonomy_id', $ttId, $tax)->to_array());
+            static::assertSame($arr, get_term_by('term_taxonomy_id', $ttId)->to_array());
+        }
+
+        $badId = (int)(max($ids) + 1);
+        static::assertNull(get_term($badId));
+        static::assertFalse(get_term_by('id', $badId));
     }
 }

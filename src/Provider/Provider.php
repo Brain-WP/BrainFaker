@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
+use ArrayObject;
+use Brain\Monkey;
 use Faker\Generator;
 use Faker\UniqueGenerator;
 
@@ -27,11 +29,18 @@ abstract class Provider
     protected $uniqueGenerator;
 
     /**
-     * @param Generator $generator
+     * @var ArrayObject
      */
-    final public function __construct(Generator $generator) {
+    protected $functionExpectations;
+
+    /**
+     * @param Generator $generator
+     * @param ArrayObject $functionExpectations
+     */
+    final public function __construct(Generator $generator, ArrayObject $functionExpectations) {
         $this->generator = $generator;
         $this->uniqueGenerator = $generator->unique(true);
+        $this->functionExpectations = $functionExpectations;
     }
 
     /**
@@ -43,8 +52,27 @@ abstract class Provider
     }
 
     /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->resetUnique();
+    }
+
+    /**
      * @param array $args
      * @return object
      */
     abstract public function __invoke(array $args = []);
+
+    /**
+     * @param string $function
+     * @return Monkey\Expectation\Expectation
+     */
+    protected function monkeyMockFunction(string $function): Monkey\Expectation\Expectation
+    {
+        $this->functionExpectations[$function] = Monkey\Functions\expect($function);
+
+        return $this->functionExpectations[$function];
+    }
 }

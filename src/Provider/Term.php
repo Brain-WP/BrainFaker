@@ -11,10 +11,28 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-use Brain\Monkey;
-
 class Term extends Provider
 {
+    /**
+     * @var array[]
+     */
+    private $terms = [];
+
+    /**
+     * @var bool
+     */
+    private $functionsMocked = false;
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->terms = [];
+        $this->functionsMocked = false;
+        parent::reset();
+    }
+
     /**
      * @param array $properties
      * @return \WP_Term
@@ -28,11 +46,12 @@ class Term extends Provider
 
         $id or $id = $this->uniqueGenerator->numberBetween(1, 99999999);
         $ttId or $ttId = $id;
-        $name = $this->generator->sentence($this->generator->numberBetween(1, 3));
+
+        $slug = strtolower($this->uniqueGenerator->slug($this->generator->numberBetween(1, 2)));
 
         $defaults = [
-            'name' => ucwords(strtolower($name)),
-            'slug' => preg_replace('/[^a-z0-9_-]/i', '-', $name),
+            'name' => ucwords(str_replace('-', ' ', $slug)),
+            'slug' => $slug,
             'term_group' => '',
             'taxonomy' => array_rand(Taxonomy::BUILT_IN),
             'description' => $this->generator->sentence,
@@ -54,38 +73,81 @@ class Term extends Provider
 
         /** @var \Mockery\MockInterface $term */
         $term->data = (object)$toArray;
-        $term->shouldReceive('to_array')->andReturn($toArray);
+        $term->shouldReceive('to_array')->andReturn($toArray)->byDefault();
 
-        Monkey\Functions\expect('get_term')
-            ->zeroOrMoreTimes()
-            ->with($id, $term->taxonomy)
-            ->andReturn($term);
-
-        Monkey\Functions\expect('get_term_by')
-            ->zeroOrMoreTimes()
-            ->with('slug', $term->slug, $term->taxonomy)
-            ->andReturn($term);
-
-        Monkey\Functions\expect('get_term_by')
-            ->zeroOrMoreTimes()
-            ->with('name', $term->name, $term->taxonomy)
-            ->andReturn($term);
-
-        Monkey\Functions\expect('get_term_by')
-            ->zeroOrMoreTimes()
-            ->with('id', \Mockery::anyOf($id, (string)$id), $term->taxonomy)
-            ->andReturn($term);
-
-        Monkey\Functions\expect('get_term_by')
-            ->zeroOrMoreTimes()
-            ->with('term_taxonomy_id', \Mockery::anyOf($ttId, (string)$ttId), $term->taxonomy)
-            ->andReturn($term);
-
-        Monkey\Functions\expect('get_term_by')
-            ->zeroOrMoreTimes()
-            ->with('term_taxonomy_id', \Mockery::anyOf($ttId, (string)$ttId))
-            ->andReturn($term);
+        $this->terms[$term->term_id] = $toArray;
+        $this->mockFunctions();
 
         return $term;
+    }
+
+    /**
+     * @return void
+     */
+    private function mockFunctions(): void
+    {
+        if ($this->functionsMocked) {
+            return;
+        }
+
+        $this->functionsMocked = true;
+
+        $getTerm = function ($term, $taxonomy = '', $output = 'OBJECT') {
+            $termId = is_object($term) ? $term->term_id ?? null : $term;
+            if (!$termId || !is_numeric($termId)) {
+                return null;
+            }
+
+            $data = $this->terms[(int)$termId] ?? null;
+            if (!$data || ($taxonomy && $taxonomy !== $data['taxonomy'])) {
+                return null;
+            }
+
+            $termObj = $this->__invoke($data);
+
+            if ($output === 'ARRAY_A') {
+                return $termObj->to_array();
+            } elseif ($output === 'ARRAY_N') {
+                return array_values($termObj->to_array() );
+            }
+
+            return $termObj;
+        };
+
+        $this->monkeyMockFunction('get_term')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing($getTerm);
+
+        $this->monkeyMockFunction('get_term_by')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($field, $value, $taxonomy = '', $output = 'OBJECT') use ($getTerm) {
+                    if (!in_array($field, ['id', 'term_taxonomy_id', 'slug', 'name'], true)) {
+                        return false;
+                    }
+
+                    $id = $field === 'id' ? $value : null;
+                    if ($id === null) {
+                        $isTtId = $field === 'term_taxonomy_id';
+                        if (($isTtId && !is_numeric($value))
+                            || (!$isTtId && (!is_string($value) || !$taxonomy))
+                        ) {
+                            return false;
+                        }
+
+                        $isTtId and $value = (int)$value;
+                        if ($field === 'slug') {
+                            $value = preg_replace('/[^a-z0-9_-]/i', '-', strtolower($value));
+                        }
+
+                        $values = array_column($this->terms, $field, 'term_id');
+                        $id = array_search($value, $values, true);
+                    }
+
+                    return $id && is_numeric($id)
+                        ? ($getTerm($id, $taxonomy, $output) ?: false)
+                        : false;
+                }
+            );
     }
 }

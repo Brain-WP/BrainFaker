@@ -18,6 +18,7 @@ class PostTypeTest extends ProviderTestCase
 {
     public function testNoPropertiesCreation()
     {
+        /** @var Provider\PostType $factory */
         $factory = $this->factoryProvider(Provider\PostType::class);
         $type = $factory();
 
@@ -56,7 +57,11 @@ class PostTypeTest extends ProviderTestCase
 
         static::assertTrue($type->_builtin);
 
-        static::assertSame($type, get_post_type_object($type->name));
+        static::assertInstanceOf(\WP_Post_Type::class, get_post_type_object($type->name));
+        static::assertSame($type->name, get_post_type_object($type->name)->name);
+        static::assertEquals($type->labels, get_post_type_object($type->name)->labels);
+        static::assertEquals($type->cap, get_post_type_object($type->name)->cap);
+
         static::assertTrue(post_type_exists($type->name));
     }
 
@@ -130,5 +135,27 @@ class PostTypeTest extends ProviderTestCase
         static::assertTrue($type->show_in_rest);
         static::assertTrue($type->show_ui);
         static::assertFalse($type->_builtin);
+    }
+
+    public function testFunctionWithMultipleObjects()
+    {
+        $factory = $this->factoryProvider(Provider\PostType::class);
+
+        $types = [];
+        for ($i = 0; $i < 100; $i++) {
+            $types[] = $factory();
+        }
+
+        /** @var \WP_Post_Type $type */
+        foreach ($types as $type) {
+            /** @var \WP_Post_Type $compare */
+            $compare = get_post_type_object($type->name);
+            static::assertInstanceOf(\WP_Post_Type::class, $compare);
+            static::assertSame($type->name, $compare->name);
+            static::assertSame($type->label, $compare->label);
+            static::assertSame($type->query_var, $compare->query_var);
+            static::assertEquals($type->labels, $compare->labels);
+            static::assertEquals($type->cap, $compare->cap);
+        }
     }
 }

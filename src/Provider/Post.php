@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-use Brain\Monkey;
-
 class Post extends Provider
 {
     public const MIME_TYPES = [
@@ -53,6 +51,26 @@ class Post extends Provider
     public const DATE_FORMAT = 'Y-m-d H:i:s';
 
     /**
+     * @var array[]
+     */
+    private $posts = [];
+
+    /**
+     * @var bool
+     */
+    private $functionsMocked = false;
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->posts = [];
+        $this->functionsMocked = false;
+        parent::reset();
+    }
+
+    /**
      * @param array $properties
      * @return \WP_Post
      */
@@ -65,7 +83,7 @@ class Post extends Provider
 
         $id = array_key_exists('id', $properties)
             ? $properties['id']
-            : $this->uniqueGenerator->numberBetween(1, 99999999);
+            : $this->uniqueGenerator->numberBetween(1, 99999);
 
         $publish = ($properties['post_status'] ?? null) === 'publish';
 
@@ -74,8 +92,8 @@ class Post extends Provider
         $date = $this->generator->dateTimeThisCentury($publish ? '-1 hour' : '+10 years', $zone);
         $dateMod = $this->generator->dateTimeThisCentury('now', $zone);
 
-        $title = $this->generator->sentence($this->generator->numberBetween(1, 10));
-        $content = $this->generator->randomHtml(5, 50);
+        $title = $this->generator->sentence($this->generator->numberBetween(1, 5));
+        $content = trim($this->generator->randomHtml(5, 50));
 
         $defaults = [
             'post_author' => (string)$this->generator->numberBetween(1, 99999),
@@ -93,7 +111,7 @@ class Post extends Provider
             'pinged' => '',
             'post_modified' => $dateMod->format('Y-m-d H:i:s'),
             'post_modified_gmt' => $dateMod->setTimezone($gmt)->format('Y-m-d H:i:s'),
-            'post_content_filtered' => strip_tags($content),
+            'post_content_filtered' => trim(strip_tags($content)),
             'post_parent' => rand(1, 100) > 75 ? $this->generator->numberBetween(1, 99999) : 0,
             'guid' => sprintf('http://%s?p=%d', $this->generator->domainName, $id),
             'menu_order' => $this->generator->numberBetween(0, 100),
@@ -140,23 +158,59 @@ class Post extends Provider
             $toArray['post_status'] = $status;
         }
 
-        $post->shouldReceive('to_array')->andReturn($toArray);
+        $post->shouldReceive('to_array')->andReturn($toArray)->byDefault();
 
-        Monkey\Functions\expect('get_post')
-            ->zeroOrMoreTimes()
-            ->with(\Mockery::anyOf($post->ID, (string)$post->ID))
-            ->andReturn($post);
+        $this->posts[$post->ID] = $toArray;
+        $this->mockFunctions();
 
         return $post;
     }
 
+    private function mockFunctions(): void
+    {
+        if ($this->functionsMocked) {
+            return;
+        }
+
+        $this->functionsMocked = true;
+
+        $this->monkeyMockFunction('get_post')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing(
+                function ($post) {
+                    $postId = is_object($post) ? $post->ID : $post;
+                    if (!$postId || !is_numeric($postId)) {
+                        return false;
+                    }
+
+                    $data = $this->posts[(int)$postId] ?? null;
+
+                    return $data ? $this->__invoke($data) : false;
+                }
+            );
+
+        $this->monkeyMockFunction('get_post_field')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($field = null, $post = null) {
+                    $postId = is_object($post) ? $post->ID : $post;
+                    if (!$postId || !is_numeric($postId) || !is_string($field)) {
+                        return '';
+                    }
+
+                    return $this->posts[(int)$postId][$field] ?? '';
+                }
+            );
+    }
+
     /**
      * @param array $properties
-     * @param string $zoneName
+     * @param string $randomZone
      * @return array
      * @throws \Exception
      */
-    private function setupDateProperties(array $properties, string $zoneName): array
+    private function setupDateProperties(array $properties, string $randomZone): array
     {
         $dateKeys = [
             'date' => [false, 'date_gmt'],
@@ -164,9 +218,6 @@ class Post extends Provider
             'modified' => [false, 'modified_gmt'],
             'modified_gmt' => [true, 'modified'],
         ];
-
-        $gmt = new \DateTimeZone('GMT');
-        $randomZone = new \DateTimeZone($zoneName);
 
         $original = $properties;
         foreach ($dateKeys as $key => [$isGmt, $altKey]) {
@@ -176,7 +227,7 @@ class Post extends Provider
             }
 
             $dateRaw = $hasDateKey ? $original["post_{$key}"] : $original[$key];
-            $date = $this->formatDate($dateRaw, $isGmt, $isGmt ? $gmt : $randomZone);
+            $date = $this->formatDate($dateRaw, $isGmt ? 'GMT' : $randomZone);
 
             $properties["post_{$key}"] = $date;
 
@@ -186,19 +237,25 @@ class Post extends Provider
 
             $hasAltDateKey = array_key_exists("post_{$altKey}", $original);
             if ($hasAltDateKey || array_key_exists($altKey, $original)) {
+                if (!$hasAltDateKey) {
+                    $properties["post_{$altKey}"] = $properties[$altKey];
+                    unset($properties[$key]);
+                }
+
                 continue;
             }
 
-            if ($isGmt) {
-                $altDate = \DateTime::createFromFormat(self::DATE_FORMAT, $date, $gmt)
-                    ->setTimezone($randomZone)
-                    ->format(self::DATE_FORMAT);
+            $targetZone = $isGmt ? new \DateTimeZone($randomZone) : new \DateTimeZone('GMT');
 
-                $properties["post_{$altKey}"] = $altDate;
-                continue;
+            $altDate = \DateTime::createFromFormat(self::DATE_FORMAT, $date)
+                ->setTimezone($targetZone)
+                ->format(self::DATE_FORMAT);
+
+            $properties["post_{$altKey}"] = $altDate;
+
+            if (!$hasAltDateKey) {
+                unset($properties[$key]);
             }
-
-            $properties["post_{$altKey}"] = $this->formatDate($date, true, $gmt);
         }
 
         return $properties;
@@ -206,34 +263,31 @@ class Post extends Provider
 
     /**
      * @param $date
-     * @param bool $forceGmt
-     * @param \DateTimeZone $zone
+     * @param string|null $zone
      * @return string
+     * @throws \Exception
      */
-    private function formatDate($date, bool $forceGmt, \DateTimeZone $zone): string
+    private function formatDate($date, ?string $zone = null): string
     {
         if ($date instanceof \DateTimeInterface) {
-            if (!$forceGmt) {
-                return $date->format(self::DATE_FORMAT);
-            }
-
-            $dateString = $date->format(self::DATE_FORMAT);
-
-            return \DateTime::createFromFormat(self::DATE_FORMAT, $dateString, $zone)
-                ->format(self::DATE_FORMAT);
+            return $date->format(self::DATE_FORMAT);
         }
 
         if (is_int($date)) {
-            return (new \DateTime('now'))
+            return (new \DateTime('now', new \DateTimeZone($zone ?? 'UTC')))
                 ->setTimestamp($date)
-                ->setTimezone($zone)
                 ->format(self::DATE_FORMAT);
         }
 
         if (!is_string($date) || strtolower($date) === 'now') {
-            return (new \DateTime('now'))->setTimezone($zone)->format(self::DATE_FORMAT);
+            return (new \DateTime('now', new \DateTimeZone($zone ?? 'UTC')))
+                ->format(self::DATE_FORMAT);
         }
 
-        return $this->formatDate((int)(strtotime($date) ?: time()), $forceGmt, $zone);
+        if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', $date)) {
+            return $date;
+        }
+
+        return $this->formatDate((int)(strtotime($date) ?: (int)time()), $zone);
     }
 }

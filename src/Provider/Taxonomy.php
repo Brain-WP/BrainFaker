@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-use Brain\Monkey;
-
 class Taxonomy extends Provider
 {
     public const BUILT_IN = [
@@ -123,13 +121,12 @@ class Taxonomy extends Provider
                 'delete_terms' => 'delete_post_tags',
                 'assign_terms' => 'assign_post_tags',
             ],
-            'rewrite' =>
-                [
-                    'with_front' => true,
-                    'hierarchical' => false,
-                    'ep_mask' => 1024,
-                    'slug' => 'tag',
-                ],
+            'rewrite' => [
+                'with_front' => true,
+                'hierarchical' => false,
+                'ep_mask' => 1024,
+                'slug' => 'tag',
+            ],
             'query_var' => 'tag',
             'update_count_callback' => '',
             'show_in_rest' => true,
@@ -313,6 +310,26 @@ class Taxonomy extends Provider
     ];
 
     /**
+     * @var array[]
+     */
+    private $taxonomies = [];
+
+    /**
+     * @var bool
+     */
+    private $functionsMocked = false;
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->taxonomies = [];
+        $this->functionsMocked = false;
+        parent::reset();
+    }
+
+    /**
      * @param array $properties
      * @return \WP_Taxonomy|\Mockery\MockInterface
      */
@@ -326,6 +343,12 @@ class Taxonomy extends Provider
             : null;
 
         $name = (string)($customName ?? $randomName);
+
+        $loadedProperties = $this->maybeLoadProperties($name, $properties);
+        if (is_array($loadedProperties)) {
+            return $this->createTaxonomy($loadedProperties, [], $name);
+        }
+
         $builtIn = array_key_exists($name, self::BUILT_IN);
         $baseName = $builtIn ? $name : $randomName;
 
@@ -338,18 +361,56 @@ class Taxonomy extends Provider
         $properties['_builtin'] = $builtIn;
 
         $taxonomy = $this->createTaxonomy($defaults, $properties, $name, $public);
-
-        Monkey\Functions\expect('get_taxonomy')
-            ->zeroOrMoreTimes()
-            ->with($taxonomy->name)
-            ->andReturn($taxonomy);
-
-        Monkey\Functions\expect('taxonomy_exists')
-            ->zeroOrMoreTimes()
-            ->with($taxonomy->name)
-            ->andReturn(true);
+        $this->mockFunctions();
 
         return $taxonomy;
+    }
+
+    /**
+     * @param string $name
+     * @param array $properties
+     * @return array|null
+     */
+    private function maybeLoadProperties(string $name, array $properties): ?array
+    {
+        if (!isset($this->taxonomies[$name])) {
+            return null;
+        }
+
+        $diffKeys = ['labels' => '', 'cap' => '', 'rewrite' => '', 'name' => ''];
+
+        $savedProperties = $this->taxonomies[$name];
+        $savedScalars = array_diff_key($savedProperties, $diffKeys);
+        $savedLabels = $savedProperties['labels'] ?? [];
+        $savedCaps = $savedProperties['cap'] ?? [];
+        $savedRewrite = $savedProperties['rewrite'] ?? false;
+        $savedRewrite and $savedRewrite = (array)$savedRewrite;
+
+        $newScalars = $properties ? array_diff_key($properties, $diffKeys) : [];
+        $newLabels = (array)($properties['labels'] ?? []);
+        $newCaps = (array)($properties['cap'] ?? []);
+        $newRewrite = $properties['rewrite'] ?? false;
+        $newRewrite and $newRewrite = (array)$newRewrite;
+
+        $savedScalars and ksort($savedScalars);
+        $savedLabels and ksort($savedLabels);
+        $savedCaps and ksort($savedCaps);
+        $savedRewrite and ksort($savedRewrite);
+
+        $newScalars and ksort($newScalars);
+        $newLabels and ksort($newLabels);
+        $newCaps and ksort($newCaps);
+        $newRewrite and ksort($newRewrite);
+
+        if (($newScalars && $newScalars !== $savedScalars)
+            || ($newLabels && $newLabels !== $savedLabels)
+            || ($newCaps && $newCaps !== $savedCaps)
+            || ($newRewrite && $newRewrite !== $savedRewrite)
+        ) {
+            throw new \Error("Taxonomy {$name} was already faked with different properties.");
+        }
+
+        return $savedProperties;
     }
 
     /**
@@ -363,7 +424,7 @@ class Taxonomy extends Provider
         array $defaults,
         array $properties,
         string $name,
-        ?bool $public
+        ?bool $public = null
     ): \WP_Taxonomy {
 
         $showUi = $properties['show_ui'] ?? $public;
@@ -382,6 +443,9 @@ class Taxonomy extends Provider
             'show_in_rest',
         ];
 
+        $reloading = isset($this->taxonomies[$name]);
+        $data = [];
+
         $taxonomy = \Mockery::mock(\WP_Taxonomy::class);
 
         foreach ($defaults as $key => $value) {
@@ -397,6 +461,7 @@ class Taxonomy extends Provider
 
             if (!in_array($key, ['labels', 'cap'], true)) {
                 $taxonomy->{$key} = $field;
+                $reloading or $data[$key] = $field;
             }
         }
 
@@ -407,17 +472,57 @@ class Taxonomy extends Provider
         $baseType = $taxonomy->hierarchical ? 'category' : 'post_tag';
         $baseData = $buildIn ? self::BUILT_IN[$name] : self::BUILT_IN[$baseType];
 
-        $taxonomy->labels = (object)array_merge($baseData['labels'], $labels);
-        $taxonomy->cap = (object)array_merge($baseData['cap'], $caps);
+        $data['labels'] = array_merge($baseData['labels'], $labels);
+        $taxonomy->labels = (object)$data['labels'];
+
+        $data['cap'] = array_merge($baseData['cap'], $caps);
+        $taxonomy->cap = (object)$data['cap'];
 
         if (empty($properties['label']) && !empty($properties['labels']['name'])) {
             $taxonomy->label = $taxonomy->labels->name;
+            $reloading or $data['label'] = $taxonomy->labels->name;
         }
 
         if (empty($properties['labels']['name']) && !empty($properties['label'])) {
             $taxonomy->labels->name = $taxonomy->label;
+            $reloading or $data['labels']['name'] = $taxonomy->label;
         }
 
+        $reloading or $this->taxonomies[$name] = $data;
+
         return $taxonomy;
+    }
+
+    /**
+     * @return void
+     */
+    private function mockFunctions(): void
+    {
+        if ($this->functionsMocked) {
+            return;
+        }
+
+        $this->functionsMocked = true;
+
+        $this->monkeyMockFunction('get_taxonomy')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($name) {
+                    if (!is_scalar($name) || !isset($this->taxonomies[$name])) {
+                        return null;
+                    }
+
+                    return $this->__invoke($this->taxonomies[$name]);
+                }
+            );
+
+        $this->monkeyMockFunction('taxonomy_exists')
+            ->zeroOrMoreTimes()
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($name) {
+                    return is_scalar($name) && array_key_exists($name, $this->taxonomies);
+                }
+            );
     }
 }

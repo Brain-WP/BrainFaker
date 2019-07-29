@@ -82,8 +82,11 @@ class SiteTest extends ProviderTestCase
         static::assertTrue((bool)filter_var($site->home, FILTER_VALIDATE_URL));
         static::assertIsInt($site->post_count);
         static::assertGreaterThan(0, $site->post_count);
-        static::assertSame($site, get_site($site->blog_id));
-        static::assertSame($site, get_site((int)$site->blog_id));
+
+        static::assertInstanceOf(\WP_Site::class, get_site($site->blog_id));
+        static::assertInstanceOf(\WP_Site::class, get_site((int)$site->blog_id));
+        static::assertSame($site->to_array(), get_site($site->blog_id)->to_array());
+        static::assertSame($site->to_array(), get_site((int)$site->blog_id)->to_array());
     }
 
     public function testWithGivenId()
@@ -105,6 +108,23 @@ class SiteTest extends ProviderTestCase
         static::assertSame('http://example.com/blog/', $site->home);
         static::assertSame('http://example.com/blog/', $site->siteurl);
         static::assertSame('/blog', $site->path);
+    }
+
+    public function testFunctionsWithMultipleObjects()
+    {
+        /** @var Provider\Site $factory */
+        $factory = $this->factoryProvider(Provider\Site::class);
+
+        $sites = [];
+        for ($i = 0; $i < 100; $i++) {
+            $sites[] = $factory();
+        }
+
+        /** @var \WP_Site $site */
+        foreach ($sites as $site) {
+            static::assertInstanceOf(\WP_Site::class, get_site($site->blog_id));
+            static::assertSame($site->to_array(), get_site($site->blog_id)->to_array());
+        }
     }
 
     /**

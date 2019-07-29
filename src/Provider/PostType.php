@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-use Brain\Monkey;
-
 class PostType extends Provider
 {
     public const BUILT_IN = [
@@ -810,6 +808,26 @@ class PostType extends Provider
     ];
 
     /**
+     * @var array[]
+     */
+    private $types = [];
+
+    /**
+     * @var bool
+     */
+    private $functionsMocked = false;
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->types = [];
+        $this->functionsMocked = false;
+        parent::reset();
+    }
+
+    /**
      * @param array $properties
      * @return \WP_Post_Type
      */
@@ -823,6 +841,12 @@ class PostType extends Provider
             : null;
 
         $name = (string)($customName ?? $randomName);
+
+        $loadedProperties = $this->maybeLoadProperties($name, $properties);
+        if (is_array($loadedProperties)) {
+            return $this->createType($loadedProperties, [], $name);
+        }
+
         $builtIn = array_key_exists($name, self::BUILT_IN);
         $baseName = $builtIn ? $name : $randomName;
 
@@ -835,18 +859,49 @@ class PostType extends Provider
         $properties['_builtin'] = $builtIn;
 
         $type = $this->createType($defaults, $properties, $name, $public);
-
-        Monkey\Functions\expect('get_post_type_object')
-            ->zeroOrMoreTimes()
-            ->with($type->name)
-            ->andReturn($type);
-
-        Monkey\Functions\expect('post_type_exists')
-            ->zeroOrMoreTimes()
-            ->with($type->name)
-            ->andReturn(true);
+        $this->mockFunctions();
 
         return $type;
+    }
+
+    /**
+     * @param string $name
+     * @param array $properties
+     * @return array|null
+     */
+    private function maybeLoadProperties(string $name, array $properties) : ?array
+    {
+        if (!isset($this->types[$name])) {
+            return null;
+        }
+
+        $diffKeys = ['labels' => '', 'cap' => '', 'name' => ''];
+
+        $savedProperties = $this->types[$name];
+        $savedScalars = array_diff_key($savedProperties, $diffKeys);
+        $savedLabels = $savedProperties['labels'];
+        $savedCaps = $savedProperties['cap'];
+
+        $newScalars = $properties ? array_diff_key($properties, $diffKeys) : [];
+        $newLabels = (array)($properties['labels'] ?? []);
+        $newCaps = (array)($properties['cap'] ?? []);
+
+        $savedScalars and ksort($savedScalars);
+        $savedLabels and ksort($savedLabels);
+        $savedCaps and ksort($savedCaps);
+
+        $newScalars and ksort($newScalars);
+        $newLabels and ksort($newLabels);
+        $newCaps and ksort($newCaps);
+
+        if (($newScalars && $newScalars !== $savedScalars)
+            || ($newLabels && $newLabels !== $savedLabels)
+            || ($newCaps && $newCaps !== $savedCaps)
+        ) {
+            throw new \Error("Post type {$name} was already faked with different properties.");
+        }
+
+        return $savedProperties;
     }
 
     /**
@@ -880,6 +935,9 @@ class PostType extends Provider
             'show_in_admin_bar',
         ];
 
+        $reloading = isset($this->types[$name]);
+        $data = [];
+
         foreach ($defaults as $key => $value) {
             $custom = array_key_exists($key, $properties);
             $field = $custom ? $properties[$key] : $value;
@@ -893,6 +951,7 @@ class PostType extends Provider
 
             if (!in_array($key, ['labels', 'cap'], true)) {
                 $type->{$key} = $field;
+                $reloading or $data[$key] = $field;
             }
         }
 
@@ -903,17 +962,56 @@ class PostType extends Provider
         $baseType = $type->hierarchical ? 'page' : 'post';
         $baseData = $buildIn ? self::BUILT_IN[$name] : self::BUILT_IN[$baseType];
 
-        $type->labels = (object)array_merge($baseData['labels'], $labels);
-        $type->cap = (object)array_merge($baseData['cap'], $caps);
+        $data['labels'] = array_merge($baseData['labels'], $labels);
+        $type->labels = (object)$data['labels'];
+
+        $data['cap'] = array_merge($baseData['cap'], $caps);
+        $type->cap = (object)$data['cap'];
 
         if (empty($properties['label']) && !empty($properties['labels']['name'])) {
             $type->label = $type->labels->name;
+            $reloading or $data['label'] = $type->label;
         }
 
         if (empty($properties['labels']['name']) && !empty($properties['label'])) {
             $type->labels->name = $type->label;
+            $reloading or $data['labels']['name'] = $type->label;
         }
 
+        $reloading or $this->types[$name] = $data;
+
         return $type;
+    }
+
+    /**
+     * @retun void
+     */
+    private function mockFunctions(): void
+    {
+        if ($this->functionsMocked) {
+            return;
+        }
+
+        $this->functionsMocked = true;
+
+        $this->monkeyMockFunction('get_post_type_object')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($name) {
+                    if (!is_scalar($name) || !isset($this->types[$name])) {
+                        return null;
+                    }
+
+                    return $this->__invoke($this->types[$name]);
+                }
+            );
+
+        $this->monkeyMockFunction('post_type_exists')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($name) {
+                    return is_scalar($name) && array_key_exists($name, $this->types);
+                }
+            );
     }
 }

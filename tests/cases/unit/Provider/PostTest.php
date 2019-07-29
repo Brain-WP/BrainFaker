@@ -94,8 +94,14 @@ class PostTest extends ProviderTestCase
         ksort($actualArray);
 
         static::assertSame($expectedArray, $actualArray);
-        static::assertSame($post, get_post($post->ID));
-        static::assertSame($post, get_post((string)$post->ID));
+        static::assertSame($post->to_array(), get_post($post->ID)->to_array());
+        static::assertSame($post->to_array(), get_post((string)$post->ID)->to_array());
+        static::assertSame($post->to_array(), get_post($post)->to_array());
+
+        foreach ($expectedArray as $key => $value) {
+            static::assertSame($value ?? '', get_post_field($key, $post->ID));
+            static::assertSame($value ?? '', get_post_field($key, $post));
+        }
     }
 
     public function testCreateWithId()
@@ -150,5 +156,23 @@ class PostTest extends ProviderTestCase
         $post = $factory(['status' => 'trash']);
 
         static::assertSame('trash', $post->post_status);
+    }
+
+    public function testFunctionWithMultipleObjects()
+    {
+        /** @var Provider\Post $factory */
+        $factory = $this->factoryProvider(Provider\Post::class);
+
+        $posts = [];
+        for ($i = 0; $i < 100; $i++) {
+            $posts[] = $factory();
+        }
+
+        /** @var \WP_Post $post */
+        foreach ($posts as $post) {
+            /** @var \WP_Post $compare */
+            $compare = get_post($post->ID);
+            static::assertSame($post->to_array(), $compare->to_array());
+        }
     }
 }

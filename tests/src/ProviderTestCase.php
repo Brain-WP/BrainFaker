@@ -16,6 +16,28 @@ use Faker\Factory;
 
 abstract class ProviderTestCase extends TestCase
 {
+    private $providers = [];
+
+    private $functions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->functions = new \ArrayObject();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->functions = null;
+
+        /** @var  Provider$provider */
+        foreach ($this->providers as $provider) {
+            $provider->reset();
+        }
+
+        parent::tearDown();
+    }
+
     /**
      * @param string $class
      * @return Provider
@@ -23,7 +45,8 @@ abstract class ProviderTestCase extends TestCase
     protected function factoryProvider(string $class): Provider
     {
         /** @var Provider $provider */
-        $provider = new $class(Factory::create());
+        $provider = new $class(Factory::create(), $this->functions);
+        $this->providers[] = $provider;
 
         return $provider;
     }
