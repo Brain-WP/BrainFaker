@@ -42,7 +42,7 @@ class PostTest extends ProviderTestCase
         static::assertInstanceOf(\DateTime::class, $this->dateByMySql($post->post_modified));
         static::assertInstanceOf(\DateTime::class, $this->dateByMySql($post->post_modified_gmt));
         static::assertIsString($post->post_content_filtered);
-        static::assertSame($post->post_content_filtered, strip_tags($post->post_content));
+        static::assertSame($post->post_content_filtered, trim(strip_tags($post->post_content)));
         static::assertIsInt($post->post_parent);
         static::assertGreaterThanOrEqual(0, $post->post_parent);
         static::assertTrue((bool)filter_var($post->guid ,FILTER_VALIDATE_URL));
@@ -94,6 +94,7 @@ class PostTest extends ProviderTestCase
         ksort($actualArray);
 
         static::assertSame($expectedArray, $actualArray);
+
         static::assertSame($post->to_array(), get_post($post->ID)->to_array());
         static::assertSame($post->to_array(), get_post((string)$post->ID)->to_array());
         static::assertSame($post->to_array(), get_post($post)->to_array());

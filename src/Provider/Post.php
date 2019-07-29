@@ -93,13 +93,19 @@ class Post extends Provider
         $dateMod = $this->generator->dateTimeThisCentury('now', $zone);
 
         $title = $this->generator->sentence($this->generator->numberBetween(1, 5));
-        $content = trim($this->generator->randomHtml(5, 50));
+
+        $content = $properties['post_content']
+            ?? $properties['content']
+            ?? $this->generateRandomHtml();
+
+        $contentFiltered = $properties['post_content_filtered']
+            ?? $properties['content_filtered']
+            ?? trim(strip_tags($content));
 
         $defaults = [
             'post_author' => (string)$this->generator->numberBetween(1, 99999),
             'post_date' => $date->format('Y-m-d H:i:s'),
             'post_date_gmt' => $date->setTimezone($gmt)->format('Y-m-d H:i:s'),
-            'post_content' => $content,
             'post_title' => $title,
             'post_excerpt' => $this->generator->sentences(3, true),
             'post_status' => '',
@@ -111,7 +117,6 @@ class Post extends Provider
             'pinged' => '',
             'post_modified' => $dateMod->format('Y-m-d H:i:s'),
             'post_modified_gmt' => $dateMod->setTimezone($gmt)->format('Y-m-d H:i:s'),
-            'post_content_filtered' => trim(strip_tags($content)),
             'post_parent' => rand(1, 100) > 75 ? $this->generator->numberBetween(1, 99999) : 0,
             'guid' => sprintf('http://%s?p=%d', $this->generator->domainName, $id),
             'menu_order' => $this->generator->numberBetween(0, 100),
@@ -141,6 +146,11 @@ class Post extends Provider
             $post->{$key} = $field;
             $toArray[$key] = $field;
         }
+
+        $post->post_content = $content;
+        $toArray['post_content'] = $content;
+        $post->post_content_filtered = $contentFiltered;
+        $toArray['post_content_filtered'] = $contentFiltered;
 
         if ($post->post_type === 'attachment') {
             $mime = $properties['post_mime_type'] ?? $properties['mime_type'] ?? null;
@@ -289,5 +299,51 @@ class Post extends Provider
         }
 
         return $this->formatDate((int)(strtotime($date) ?: (int)time()), $zone);
+    }
+
+    /**
+     * Faker randomHtml is slow for long text and it generates full-page HTML, not fragment like
+     * post content is.
+     *
+     * @return string
+     */
+    private function generateRandomHtml(): string
+    {
+        $output = '';
+        $max = $this->generator->numberBetween(0, 50);
+        if (!$max) {
+            return '';
+        }
+
+        $listItems = $this->generator->numberBetween(0, 10);
+        $list = '';
+        if ($listItems) {
+            $listTag = $this->generator->randomElement(['ul', 'ol']);
+            $list .= "<{$listTag}>";
+            for ($u = 0; $u < $listItems; $u++) {
+                $list .= "\n<li>";
+                $list .= $this->generator->sentence($this->generator->numberBetween(1, 3));
+                $list .= "<li>";
+            }
+            $list .= "\n</{$listTag}>";
+        }
+
+        for ($i = 0; $i < $max; $i++) {
+            $tag = $this->generator->randomElement(['p', 'div']);
+            $output .= "\n<{$tag}>\n";
+            $image = $this->generator->randomElement([true, false]);
+            if ($image) {
+                $output .= sprintf(
+                    "<img alt=\"%s\" src=\"%s\" />\n",
+                    $this->generator->sentence(1, 3),
+                    $this->generator->imageUrl()
+                );
+            }
+            $output .= $this->generator->sentences($this->generator->numberBetween(1, 5), true);
+            $output .= "\n";
+            $output .= $tag === 'div' ? "{$list}\n</{$tag}>" : "</{$tag}>\n{$list}";
+        }
+
+        return trim($output);
     }
 }
