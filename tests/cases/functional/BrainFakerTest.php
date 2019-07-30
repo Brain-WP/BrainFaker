@@ -103,7 +103,7 @@ class BrainFakerTest extends FunctionalTestCase
             return 'No post';
         }
 
-        $callback = static function (\WP_User $user) {
+        $callback = static function (\WP_User $user) { // phpcs:ignore
             if (wp_get_current_user()->ID !== $user->ID) {
                 return "No current user";
             }
