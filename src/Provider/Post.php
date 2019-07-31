@@ -56,6 +56,17 @@ class Post extends FunctionMockerProvider
     private $posts = [];
 
     /**
+     * @param \WP_Post $post
+     * @return callable
+     */
+    public static function withSame(\WP_Post $post): callable
+    {
+        return function (\WP_Post $thePost) use ($post): bool {
+            return (int)$thePost->ID === (int)$post->ID;
+        };
+    }
+
+    /**
      * @return void
      */
     public function reset(): void

@@ -19,6 +19,17 @@ class Term extends FunctionMockerProvider
     private $terms = [];
 
     /**
+     * @param \WP_Term $term
+     * @return callable
+     */
+    public static function withSame(\WP_Term $term): callable
+    {
+        return function (\WP_Term $theTerm) use ($term): bool {
+            return (int)$theTerm->term_id === (int)$term->term_id;
+        };
+    }
+
+    /**
      * @return void
      */
     public function reset(): void

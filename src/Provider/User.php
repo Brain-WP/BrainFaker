@@ -213,6 +213,17 @@ class User extends FunctionMockerProvider
     private $currentUserSet = false;
 
     /**
+     * @param \WP_User $user
+     * @return callable
+     */
+    public static function withSame(\WP_User $user): callable
+    {
+        return function (\WP_User $theUser) use ($user): bool {
+            return (int)$theUser->ID === (int)$user->ID;
+        };
+    }
+
+    /**
      * @return void
      */
     public function reset(): void

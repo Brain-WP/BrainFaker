@@ -19,6 +19,17 @@ class Site extends FunctionMockerProvider
     private $sites = [];
 
     /**
+     * @param \WP_Site $site
+     * @return callable
+     */
+    public static function withSame(\WP_Site $site): callable
+    {
+        return function (\WP_Site $theSite) use ($site): bool {
+            return (int)$theSite->term_id === (int)$site->term_id;
+        };
+    }
+
+    /**
      * @return void
      */
     public function reset(): void
