@@ -1,5 +1,11 @@
 # Brain Faker
 
+[![license](https://img.shields.io/packagist/l/brain/faker.svg?style=flat-square)](http://opensource.org/licenses/MIT)
+[![travis-ci status](https://img.shields.io/travis/Brain-WP/BrainFaker.svg?style=flat-square)](https://travis-ci.org/Brain-WP/BrainFaker)
+[![codecov.io](https://img.shields.io/codecov/c/github/Brain-WP/BrainFaker.svg?style=flat-square)](http://codecov.io/github/Brain-WP/BrainFaker?branch=master)
+[![packagist](https://img.shields.io/packagist/v/brain/faker.svg?style=flat-square)](https://packagist.org/packages/brain/faker)
+[![PHP version requirement](https://img.shields.io/packagist/php-v/brain/faker.svg?style=flat-square)](https://packagist.org/packages/brain/faker)
+
 Uses [Faker](https://github.com/fzaninotto/Faker) and [Brain Monkey](https://github.com/Brain-WP/BrainMonkey) to provide easy generation of *fake* WordPress objects and related functions.
 
 ---
