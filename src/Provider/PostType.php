@@ -829,12 +829,19 @@ class PostType extends FunctionMockerProvider
     {
         $properties = array_change_key_case($properties, CASE_LOWER);
         $customName = array_key_exists('name', $properties) ? $properties['name'] : null;
-        $randomName = array_rand(self::BUILT_IN);
+        $name = $customName;
+
+        if ($name === null) {
+            $buildInKeys = array_keys(self::BUILT_IN);
+            $notDoneBuildIn = array_diff($buildInKeys, array_keys($this->types));
+            $name = $this->generator->randomElement($notDoneBuildIn ?: $buildInKeys);
+        }
+
         $public = array_key_exists('public', $properties)
             ? (bool)filter_var($properties['public'], FILTER_VALIDATE_BOOLEAN)
             : null;
 
-        $name = (string)($customName ?? $randomName);
+        /** @var string $name */
 
         $loadedProperties = $this->maybeLoadProperties($name, $properties);
         if (is_array($loadedProperties)) {
@@ -842,7 +849,7 @@ class PostType extends FunctionMockerProvider
         }
 
         $builtIn = array_key_exists($name, self::BUILT_IN);
-        $baseName = $builtIn ? $name : $randomName;
+        $baseName = $builtIn ? $name : array_rand(self::BUILT_IN);
 
         if (!$builtIn && ($customName || (is_bool($public) && $public))) {
             $hierarchical = !empty($properties['hierarchical']);

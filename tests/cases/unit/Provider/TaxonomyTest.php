@@ -162,4 +162,17 @@ class TaxonomyTest extends ProviderTestCase
             static::assertEquals($taxonomy->cap, $compare->cap);
         }
     }
+
+    public function testUnicityUpToPossible()
+    {
+        /** @var Provider\Taxonomy $factory */
+        $factory = $this->factoryProvider(Provider\Taxonomy::class);
+
+        $names = [];
+        for ($i = 0; $i < count(Provider\Taxonomy::BUILT_IN); $i++) {
+            $names[] = $factory()->name;
+        }
+
+        static::assertSame($names, array_unique($names));
+    }
 }

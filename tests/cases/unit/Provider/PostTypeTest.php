@@ -53,7 +53,10 @@ class PostTypeTest extends ProviderTestCase
         static::assertTrue(is_array($type->rewrite) || ($type->rewrite === false));
         static::assertIsBool($type->show_in_rest);
         static::assertTrue(is_string($type->rest_base) || is_bool($type->rest_base));
-        static::assertTrue(is_string($type->rest_controller_class) || is_bool($type->rest_controller_class));
+        static::assertTrue(
+            is_string($type->rest_controller_class)
+            || is_bool($type->rest_controller_class)
+        );
 
         static::assertTrue($type->_builtin);
 
@@ -157,5 +160,17 @@ class PostTypeTest extends ProviderTestCase
             static::assertEquals($type->labels, $compare->labels);
             static::assertEquals($type->cap, $compare->cap);
         }
+    }
+
+    public function testUnicityUpToPossible()
+    {
+        $factory = $this->factoryProvider(Provider\PostType::class);
+
+        $names = [];
+        for ($i = 0; $i < count(Provider\PostType::BUILT_IN); $i++) {
+            $names[] = $factory()->name;
+        }
+
+        static::assertSame($names, array_unique($names));
     }
 }
