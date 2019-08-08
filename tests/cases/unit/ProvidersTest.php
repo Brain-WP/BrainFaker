@@ -419,8 +419,8 @@ PHP;
                 $method = array_shift($methods);
                 $provider->wp()->{$method}();
             }
-        } catch (\Error $e) {
-            static::assertRegExp('/undefined method/', $e->getMessage());
+        } catch (\Error $error) {
+            static::assertRegExp('/undefined method/', $error->getMessage());
             $exceptionsCount++;
             if ($methods) {
                 goto execute;

@@ -287,7 +287,7 @@ class UserTest extends ProviderTestCase
 
         $this->expectOutputString('Jane rocks!');
 
-        $rocks = static function (\WP_User $user) {
+        $rocks = static function (\WP_User $user): \WP_User {
             if (array_intersect(['editor', 'author'], $user->roles)) {
                 print "{$user->user_firstname} rocks!";
             }
