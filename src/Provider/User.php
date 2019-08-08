@@ -393,7 +393,10 @@ class User extends FunctionMockerProvider
         $user->roles = $userRoles;
         $user->caps = $userCaps;
         $user->allcaps = $allCaps;
-        $user->user_level = (int)$level;
+
+        if (is_int($level)) {
+            $user->user_level = $level;
+        }
 
         $user->shouldReceive('exists')->andReturn($id > 0)->byDefault();
 
@@ -536,13 +539,10 @@ class User extends FunctionMockerProvider
 
         $rawRoles = is_array($roles) ? $roles : [];
         ($role && is_string($role)) and $rawRoles[] = $role;
+        $userRoles = array_values(array_filter($rawRoles, 'is_string'));
+        is_numeric($level) and $level = (int)$level;
 
-        $userRoles = [];
-        foreach ($rawRoles as $rawRole) {
-            is_string($rawRole) and $userRoles[] = $rawRole;
-        }
-
-        if (is_numeric($level) && !$userRoles) {
+        if (is_int($level) && !$userRoles) {
             $foundLevels = [];
             $level = min(max((int)$level, 0), 10);
             foreach (self::LEVELS as $levelRole => $roleLevel) {
@@ -554,7 +554,7 @@ class User extends FunctionMockerProvider
             }
         }
 
-        if (!$userRoles) {
+        if (!$userRoles && $roles !== []) {
             $userRoles = $this->generator->randomElements(array_keys(self::CAPS), 3);
         }
 
@@ -565,7 +565,7 @@ class User extends FunctionMockerProvider
             $hasCaps
         );
 
-        if (!is_numeric($level)) {
+        if (!is_int($level)) {
             $level = null;
             foreach ($userRoles as $role) {
                 $level = $level === null
@@ -573,13 +573,16 @@ class User extends FunctionMockerProvider
                     : (int)max($level, self::LEVELS[$role] ?? 0);
             }
 
-            $level === null and $level = $this->generator->numberBetween(0, 10);
+            if ($level === null && $roles !== []) {
+                $level = $this->generator->numberBetween(0, 10);
+            }
         }
 
-        $level = min(max((int)$level, 0), 10);
-
-        for ($i = 0; $i <= $level; $i++) {
-            array_key_exists("level_{$i}", $allCaps) or $allCaps["level_{$i}"] = true;
+        if (is_int($level)) {
+            $level = min(max((int)$level, 0), 10);
+            for ($i = 0; $i <= $level; $i++) {
+                array_key_exists("level_{$i}", $allCaps) or $allCaps["level_{$i}"] = true;
+            }
         }
 
         return [array_unique(array_filter($userRoles)), $allCaps, $userCaps, $level];
