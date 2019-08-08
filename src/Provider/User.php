@@ -393,10 +393,7 @@ class User extends FunctionMockerProvider
         $user->roles = $userRoles;
         $user->caps = $userCaps;
         $user->allcaps = $allCaps;
-
-        if (is_int($level)) {
-            $user->user_level = $level;
-        }
+        $user->user_level = is_int($level) ? $level : '';
 
         $user->shouldReceive('exists')->andReturn($id > 0)->byDefault();
 
