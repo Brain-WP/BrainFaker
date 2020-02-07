@@ -59,8 +59,8 @@
         }
     },
     "scripts": {
-        "tests": "@php ./vendor/squizlabs/php_codesniffer/bin/phpunit",
-        "tests:coverage": "@php ./vendor/squizlabs/php_codesniffer/bin/phpunit --coverage-clover=coverage.xml",
+        "tests": "@php ./vendor/phpunit/phpunit/phpunit --no-coverage",
+        "tests:coverage": "@php ./vendor/phpunit/phpunit/phpunit --coverage-clover=coverage.xml",
         "phpcs": [
             "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs -p . --ignore=*/vendor/* --extensions=php --basepath=./ --runtime-set testVersion 7.2-",
             "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs -p . --standard=PHPCompatibility --ignore=*/vendor/* --extensions=php --basepath=./ --runtime-set testVersion 7.2-"
