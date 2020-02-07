@@ -51,7 +51,7 @@ class ExampleClass extends \Brain\Faker\Provider\Provider {
     }
 }
 PHP;
-        eval($php);
+        eval($php); // phpcs:ignore
 
         /** @noinspection PhpUndefinedClassInspection */
         $provider->__addProviderClass(ExampleClass::class, 'thing', 'things');

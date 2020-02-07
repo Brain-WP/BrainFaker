@@ -50,16 +50,17 @@ class TaxonomyTest extends ProviderTestCase
         $controller = $taxonomy->rest_controller_class;
         static::assertTrue(is_string($controller) || is_bool($controller));
 
-        $cb = $taxonomy->meta_box_cb;
+        // phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+        $boxCb = $taxonomy->meta_box_cb;
         $cb_esc = $taxonomy->meta_box_sanitize_cb;
         $cb_upd = $taxonomy->update_count_callback;
-        static::assertTrue(is_null($cb) || is_bool($cb) || is_callable($cb, true));
+        static::assertTrue(is_null($boxCb) || is_bool($boxCb) || is_callable($boxCb, true));
         static::assertTrue(is_null($cb_esc) || is_callable($cb_esc, true));
         static::assertTrue(is_null($cb_upd) || is_callable($cb_upd, true));
+        // phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
 
         static::assertTrue($taxonomy->_builtin);
-
-        static::assertInstanceOf(\WP_Taxonomy::class, get_taxonomy($taxonomy->name) );
+        static::assertInstanceOf(\WP_Taxonomy::class, get_taxonomy($taxonomy->name));
         static::assertSame($taxonomy->name, get_taxonomy($taxonomy->name)->name);
         static::assertEquals($taxonomy->labels, get_taxonomy($taxonomy->name)->labels);
         static::assertEquals($taxonomy->cap, get_taxonomy($taxonomy->name)->cap);

@@ -17,6 +17,7 @@ namespace Brain\Faker;
 
 /**
  * @codeCoverageIgnore
+ * phpcs:disable
  */
 class MonkeyWpUser
 {

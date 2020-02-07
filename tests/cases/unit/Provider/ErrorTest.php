@@ -133,5 +133,4 @@ class ErrorTest extends ProviderTestCase
         static::assertSame('', $error->get_error_message());
         static::assertNull($error->get_error_data());
     }
-
 }

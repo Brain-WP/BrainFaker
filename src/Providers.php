@@ -324,7 +324,7 @@ class Providers
      * @param string $methodMany
      * @return Providers
      */
-    public function __addProviderClass(
+    public function __addProviderClass( // phpcs:ignore
         string $providerClass,
         string $methodOne,
         string $methodMany
@@ -365,7 +365,7 @@ class Providers
     /**
      * @return Providers
      */
-    public function __resetUnique(): Providers
+    public function __resetUnique(): Providers  // phpcs:ignore
     {
         /** @var Provider $provider */
         foreach ($this->providers as $provider) {
@@ -379,7 +379,7 @@ class Providers
      * @param string $function
      * @return Expectation
      */
-    public function __monkeyFunction(string $function): Expectation
+    public function __monkeyFunction(string $function): Expectation  // phpcs:ignore
     {
         return $this->functionExpectations->replace($function);
     }
@@ -387,7 +387,7 @@ class Providers
     /**
      * @return Providers
      */
-    public function __reset(): Providers
+    public function __reset(): Providers  // phpcs:ignore
     {
         $this->functionExpectations->reset();
 

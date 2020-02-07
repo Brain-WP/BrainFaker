@@ -16,6 +16,9 @@ use Brain\Faker\Tests\ProviderTestCase;
 
 class PostTest extends ProviderTestCase
 {
+    /**
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     */
     public function testNoPropertiesCreation()
     {
         $factory = $this->factoryProvider(Provider\Post::class);

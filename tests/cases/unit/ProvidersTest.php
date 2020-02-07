@@ -23,7 +23,7 @@ class ProvidersTest extends TestCase
     public function testAddProviderClassFailsForNotProviderClass()
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessageRegExp('/class/');
+        $this->expectExceptionMessageMatches('/class/');
 
         $provider = new Providers(Factory::create());
         $provider->__addProviderClass(__CLASS__, 'bar', 'baz');
@@ -32,7 +32,7 @@ class ProvidersTest extends TestCase
     public function testAddProviderClassFailsForNotExistentClass()
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessageRegExp('/class/');
+        $this->expectExceptionMessageMatches('/class/');
 
         $provider = new Providers(Factory::create());
         $provider->__addProviderClass('Meh', 'bar', 'baz');
@@ -40,7 +40,7 @@ class ProvidersTest extends TestCase
 
     public function testAddProviderClassFailsForMalformedClass()
     {
-        $this->expectExceptionMessageRegExp('/class/');
+        $this->expectExceptionMessageMatches('/class/');
 
         $class = $this->declarePhpClass(null, null, 'protected');
 
@@ -51,7 +51,7 @@ class ProvidersTest extends TestCase
     public function testAddProviderClassFailsForNotInstantiableClass()
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessageRegExp('/not a valid provider class/');
+        $this->expectExceptionMessageMatches('/not a valid provider class/');
 
         $class = $this->declarePhpClass(null, null, null, 'abstract');
 
@@ -62,7 +62,7 @@ class ProvidersTest extends TestCase
 
     public function testAddProviderClassFailsForReservedMethodOne()
     {
-        $this->expectExceptionMessageRegExp('/reserved method/');
+        $this->expectExceptionMessageMatches('/reserved method/');
 
         $class = $this->declarePhpClass();
 
@@ -72,7 +72,7 @@ class ProvidersTest extends TestCase
 
     public function testAddProviderClassFailsForReservedMethodMany()
     {
-        $this->expectExceptionMessageRegExp('/reserved method/');
+        $this->expectExceptionMessageMatches('/reserved method/');
 
         $class = $this->declarePhpClass();
 
@@ -82,7 +82,7 @@ class ProvidersTest extends TestCase
 
     public function testAddProviderClassFailsForNotUniqueClass()
     {
-        $this->expectExceptionMessageRegExp('/uniquely identify/');
+        $this->expectExceptionMessageMatches('/uniquely identify/');
 
         $class1 = $this->declarePhpClass('ClassOne');
         $class2 = $this->declarePhpClass('ClassTwo');
@@ -106,7 +106,7 @@ class ProvidersTest extends TestCase
 
     public function testCallNotRegisteredMethod()
     {
-        $this->expectExceptionMessageRegExp('/undefined method/');
+        $this->expectExceptionMessageMatches('/undefined method/');
 
         $class = $this->declarePhpClass();
 
@@ -134,7 +134,7 @@ class ProvidersTest extends TestCase
 
     public function testCallManyFailsIfNoNumber()
     {
-        $this->expectExceptionMessageRegExp('/number/');
+        $this->expectExceptionMessageMatches('/number/');
 
         $class = $this->declarePhpClass();
 
@@ -147,7 +147,7 @@ class ProvidersTest extends TestCase
 
     public function testCallManyFailsIfNoArray()
     {
-        $this->expectExceptionMessageRegExp('/array/');
+        $this->expectExceptionMessageMatches('/array/');
 
         $class = $this->declarePhpClass();
 
@@ -458,7 +458,7 @@ namespace Brain\Faker\Tests\Unit;
     }
 }
 PHP;
-        @eval($php);
+        @eval($php); // phpcs:ignore
 
         return "\\Brain\\Faker\\Tests\\Unit\\{$name}";
     }

@@ -15,6 +15,10 @@ use Faker\Factory;
 use Faker\Generator;
 
 /**
+ * @phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.GeneratorReturnTypeWithoutYield
+ */
+
+/**
  * @param string $locale
  * @return Generator
  */

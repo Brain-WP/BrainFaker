@@ -17,6 +17,9 @@ use Brain\Faker\Tests\ProviderTestCase;
 
 class UserTest extends ProviderTestCase
 {
+    /**
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     */
     public function testNoPropertiesCreation()
     {
         /** @var Provider\User $factory */
@@ -289,7 +292,7 @@ class UserTest extends ProviderTestCase
 
         $rocks = static function (\WP_User $user): \WP_User {
             if (array_intersect(['editor', 'author'], $user->roles)) {
-                print "{$user->user_firstname} rocks!";
+                print "{$user->user_firstname} rocks!"; // phpcs:ignore
             }
 
             return $user;
@@ -307,10 +310,8 @@ class UserTest extends ProviderTestCase
      * @param \WP_User $left
      * @param \WP_User $right
      */
-    private function compareUser($left, $right): void
+    private function compareUser(\WP_User $left, \WP_User $right): void
     {
-        static::assertInstanceOf(\WP_User::class, $left);
-        static::assertInstanceOf(\WP_User::class, $right);
         static::assertSame($left->to_array(), $right->to_array());
         static::assertSame($left->allcaps, $right->allcaps);
         static::assertSame($left->caps, $right->caps);

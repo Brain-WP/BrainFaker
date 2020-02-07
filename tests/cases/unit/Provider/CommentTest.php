@@ -37,7 +37,7 @@ class CommentTest extends ProviderTestCase
         static::assertInstanceOf(\DateTime::class, $this->dateByMySql($comment->comment_date_gmt));
         static::assertIsString($comment->comment_content);
         static::assertSame(0, $comment->comment_karma);
-        static::assertTrue(in_array($comment->comment_approved, Provider\Comment::STATUSES));
+        static::assertContains($comment->comment_approved, Provider\Comment::STATUSES);
         static::assertIsString($comment->comment_agent);
         static::assertIsString($comment->comment_type);
         static::assertIsInt($comment->comment_parent);

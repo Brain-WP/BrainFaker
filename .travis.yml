@@ -1,21 +1,28 @@
 language: php
 
 php:
-  - "7.1"
-  - "7.2"
-  - "7.3"
-  - "nightly"
+  - 7.2
+  - 7.3
+  - 7.4
 
-matrix:
-  allow_failures:
-    - php: "nightly"
+stages:
+  - name: analyze
+  - name: test
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: analyze
+      php: 7.4
+      script:
+        - composer phpcs
+      after_success: skip
 
 before_script:
-  - travis_retry composer self-update
-  - travis_retry composer update --no-interaction --prefer-source  --classmap-authoritative --ignore-platform-reqs
+  - travis_retry composer update --no-interaction --prefer-source  --classmap-authoritative
 
 script:
-  - vendor/bin/phpunit --coverage-clover=coverage.xml
+  - composer tests:coverage
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

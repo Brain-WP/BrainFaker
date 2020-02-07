@@ -17,6 +17,9 @@ use Brain\Monkey;
 
 class SiteTest extends ProviderTestCase
 {
+    /**
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     */
     public function testNoPropertiesCreation()
     {
         /** @var Provider\Site $factory */

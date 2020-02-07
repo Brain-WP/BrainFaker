@@ -16,6 +16,9 @@ use Brain\Faker\Provider;
 
 class TermTest extends ProviderTestCase
 {
+    /**
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     */
     public function testNoPropertiesCreation()
     {
         /** @var Provider\Term $factory */
