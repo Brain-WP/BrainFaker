@@ -38,16 +38,6 @@ class ProvidersTest extends TestCase
         $provider->__addProviderClass('Meh', 'bar', 'baz');
     }
 
-    public function testAddProviderClassFailsForMalformedClass()
-    {
-        $this->expectExceptionMessageMatches('/class/');
-
-        $class = $this->declarePhpClass(null, null, 'protected');
-
-        $provider = new Providers(Factory::create());
-        $provider->__addProviderClass($class, 'a', 'b');
-    }
-
     public function testAddProviderClassFailsForNotInstantiableClass()
     {
         $this->expectException(\Error::class);
