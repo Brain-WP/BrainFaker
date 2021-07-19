@@ -70,6 +70,15 @@ class BrainFakerTest extends FunctionalTestCase
         static::assertSame('Bad user', $this->productionCode(123));
     }
 
+    public function testReturnedUsedIsTheSameMockedOne()
+    {
+        $this->wpFaker->post(['id' => 123, 'author' => 456]);
+        $mockedUser = $this->wpFaker->user(['id' => 456, 'role' => 'editor'])->__monkeyMakeCurrent();
+
+        static::assertSame($mockedUser, get_userdata(456));
+        static::assertSame($mockedUser, get_user_by('ID', 456));
+    }
+
     public function testWithoutBrainFaker()
     {
         $post = \Mockery::mock(\WP_Post::class);
