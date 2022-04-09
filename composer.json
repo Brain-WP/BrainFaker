@@ -1,6 +1,6 @@
 {
-    "name": "brain/faker",
-    "description": "Faker (fzaninotto/faker) for WordPress via Brain Monkey",
+    "name": "leoloso/faker",
+    "description": "Fork for PoP of: Faker (fzaninotto/faker) for WordPress via Brain Monkey",
     "minimum-stability": "stable",
     "license": "MIT",
     "keywords": [
