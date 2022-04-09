@@ -253,7 +253,7 @@ class Post extends FunctionMockerProvider
      */
     private function getPaginationLimit(array $query): int
     {
-        return $query['posts_per_page'] ?? -1;
+        return $query['posts_per_page'] ?? 0;
     }
 
     /**
