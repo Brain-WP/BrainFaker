@@ -220,12 +220,22 @@ class Post extends FunctionMockerProvider
                 }
             );
 
+        $this->functionExpectations->mock('esc_sql')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->escSql(...));
+
         $this->functionExpectations->mock('get_posts')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any())
             ->andReturnUsing($this->getPosts(...));
 
         $this->stopMockingFunctions();
+    }
+
+    private function escSql(string|array $data): string|array
+    {
+        return $data;
     }
 
     private function getPosts(array $query): array
