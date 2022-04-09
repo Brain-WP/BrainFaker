@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
-class Comment extends Provider
+class Comment extends FunctionMockerProvider
 {
+    use FunctionMockerProviderTrait;
+    
     public const STATUSES = [
         'hold',
         '0',
@@ -21,6 +23,31 @@ class Comment extends Provider
         'spam',
         'trash',
     ];
+
+    /**
+     * @var array[]
+     */
+    private $comments = [];
+
+    /**
+     * @param \WP_Comment $comment
+     * @return callable
+     */
+    public static function withSame(\WP_Comment $comment): callable
+    {
+        return function (\WP_Comment $theComment) use ($comment): bool {
+            return (int)$theComment->ID === (int)$comment->comment_ID;
+        };
+    }
+
+    /**
+     * @return void
+     */
+    public function reset(): void
+    {
+        $this->comments = [];
+        parent::reset();
+    }
 
     /**
      * @param array $properties
@@ -82,7 +109,82 @@ class Comment extends Provider
         }
 
         $comment->shouldReceive('to_array')->andReturn($toArray)->byDefault();
+        
+        $this->comments[$comment->comment_ID] = $toArray;
+        $this->mockFunctions();
 
         return $comment;
+    }
+
+    /**
+     * @return void
+     *
+     * phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+     * phpcs:disable Generic.Metrics.NestingLevel
+     */
+    private function mockFunctions(): void
+    {
+        // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
+        // phpcs:enable Generic.Metrics.NestingLevel
+
+        if (!$this->canMockFunctions()) {
+            return;
+        }
+
+        $this->functionExpectations->mock('esc_sql')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->escSql(...));
+
+        $this->functionExpectations->mock('get_comments')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getComments(...));
+
+        $this->stopMockingFunctions();
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getComments(array $query): array|int
+    {
+        $comments = $this->getEntityEntries($query);
+        if ($query['count'] ?? false) {
+            return count($comments);
+        }
+        return $comments;
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function getDataEntries(): array
+    {
+        return $this->comments;
+    }
+
+    private function retrieveIDs(array $query): bool
+    {
+        return ($query['fields'] ?? null) === 'ids';
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getPaginationLimit(array $query): int
+    {
+        return $query['number'] ?? 0;
+    }
+
+    /**
+     * @return array<int|string,string>
+     */
+    private function getFilterableProperties(): array
+    {
+        return [
+            'comment_type',
+            'parent' => 'comment_parent',
+        ];
     }
 }
