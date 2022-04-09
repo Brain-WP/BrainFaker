@@ -183,8 +183,9 @@ class Comment extends FunctionMockerProvider
     private function getFilterableProperties(): array
     {
         return [
-            'comment_type',
+            'post_id' => 'comment_post_ID',
             'parent' => 'comment_parent',
+            'comment_type',
         ];
     }
 }
