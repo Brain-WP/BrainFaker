@@ -16,6 +16,8 @@ use Brain\Monkey;
 
 class User extends FunctionMockerProvider
 {
+    use FunctionMockerProviderTrait;
+
     const CAPS = [
         'administrator' => [
             'switch_themes',
@@ -500,7 +502,48 @@ class User extends FunctionMockerProvider
                 }
             );
 
+        $this->functionExpectations->mock('esc_sql')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->escSql(...));
+
+        $this->functionExpectations->mock('get_users')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getEntityEntries(...));
+
         $this->stopMockingFunctions();
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function getDataEntries(): array
+    {
+        return $this->users;
+    }
+
+    private function retrieveIDs(array $query): bool
+    {
+        return ($query['fields'] ?? null) === 'ID';
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getPaginationLimit(array $query): int
+    {
+        return $query['number'] ?? 0;
+    }
+
+    /**
+     * @return array<int|string,string>
+     */
+    private function getFilterableProperties(): array
+    {
+        return [
+            'login',
+        ];
     }
 
     /**
