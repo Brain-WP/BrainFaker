@@ -254,7 +254,7 @@ class Post extends FunctionMockerProvider
                 $postIDs,
                 array_keys($this->posts)
             );
-            $postIDs = $this->paginatePosts($postIDs, $query);
+            $postIDs = $this->paginate($postIDs, $query['posts_per_page'] ?? -1, $query['offset'] ?? 0);
             if ($retrievePostIDs) {
                 return $postIDs;
             }
@@ -282,7 +282,7 @@ class Post extends FunctionMockerProvider
                 $query[$queryProperty]
             );
         }
-        $posts = $this->paginatePosts($posts, $query);
+        $posts = $this->paginate($posts, $query['posts_per_page'] ?? -1, $query['offset'] ?? 0);
         if ($retrievePostIDs) {
             return array_keys($posts);
         }

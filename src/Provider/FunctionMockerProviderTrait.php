@@ -12,31 +12,17 @@ trait FunctionMockerProviderTrait
     }
 
     /**
-     * @param int[]|array<int,array<string,mixed>> $entries Either post IDs or data arrays
-     * @param array<string,mixed> $query
+     * @param int[]|array<int,array<string,mixed>> $entries Either entity IDs, or the endity data arrays
      * @return int[]|array<int,array<string,mixed>>
      */
-    private function paginatePosts(array $entries, array $query): array
+    private function paginate(array $entries, int $limit, int $offset): array
     {
-        $offset = (int) ($query['offset'] ?? 0);
-        $limit = (int) ($query['posts_per_page'] ?? 10);
-        if ($limit > 0) {
-            return array_slice(
-                $entries,
-                $offset,
-                $limit,
-                true,
-            );
-        }
-        if ($offset !== 0) {
-            return array_slice(
-                $entries,
-                $offset,
-                null,
-                true,
-            );
-        }
-        return $entries;
+        return array_slice(
+            $entries,
+            $offset,
+            $limit > 0 ? $limit : null,
+            true,
+        );
     }
 
     private function filterDataEntriesByProperty(array $dataEntries, string $property, string|int|array $propertyValueOrValues): array
