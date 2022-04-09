@@ -245,7 +245,8 @@ class Post extends FunctionMockerProvider
             $postIDs = array_intersect(
                 $postIDs,
                 array_keys($this->posts)
-            );            
+            );
+            $postIDs = $this->paginatePosts($postIDs, $query);
             if ($retrievePostIDs) {
                 return $postIDs;
             }
@@ -273,12 +274,7 @@ class Post extends FunctionMockerProvider
                 $query[$queryProperty]
             );
         }
-        $posts = array_slice(
-            $posts,
-            $query['offset'] ?? 0,
-            $query['posts_per_page'] ?? 10,
-            true
-        );
+        $posts = $this->paginatePosts($posts, $query);
         if ($retrievePostIDs) {
             $postIDs = array_keys($posts);
             return $postIDs;
@@ -287,6 +283,34 @@ class Post extends FunctionMockerProvider
             $this->__invoke(...),
             array_values($posts)
         );
+    }
+
+    /**
+     * @param int[]|array<int,array<string,mixed>> $entries Either post IDs or data arrays
+     * @param array<string,mixed> $query
+     * @return int[]|array<int,array<string,mixed>>
+     */
+    private function paginatePosts(array $entries, array $query): array
+    {
+        $offset = (int) ($query['offset'] ?? 0);
+        $limit = (int) ($query['posts_per_page'] ?? 10);
+        if ($limit > 0) {
+            return array_slice(
+                $entries,
+                $offset,
+                $limit,
+                true,
+            );
+        }
+        if ($offset !== 0) {
+            return array_slice(
+                $entries,
+                $offset,
+                null,
+                true,
+            );
+        }
+        return $entries;
     }
 
     private function filterPostDataEntriesByProperty(array $postDataEntries, string $property, string|int|array $propertyValueOrValues): array
