@@ -13,6 +13,8 @@ namespace Brain\Faker\Provider;
 
 class Post extends FunctionMockerProvider
 {
+    use FunctionMockerProviderTrait;
+
     public const MIME_TYPES = [
         'image/jpeg',
         'image/gif',
@@ -220,7 +222,49 @@ class Post extends FunctionMockerProvider
                 }
             );
 
+        $this->functionExpectations->mock('esc_sql')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->escSql(...));
+
+        $this->functionExpectations->mock('get_posts')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getEntityEntries(...));
+
         $this->stopMockingFunctions();
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function getDataEntries(): array
+    {
+        return $this->posts;
+    }
+
+    private function retrieveIDs(array $query): bool
+    {
+        return ($query['fields'] ?? null) === 'ids';
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getPaginationLimit(array $query): int
+    {
+        return $query['posts_per_page'] ?? 0;
+    }
+
+    /**
+     * @return array<int|string,string>
+     */
+    private function getFilterableProperties(): array
+    {
+        return [
+            'post_type',
+            'post_status',
+        ];
     }
 
     /**
