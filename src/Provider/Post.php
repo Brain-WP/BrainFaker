@@ -237,7 +237,7 @@ class Post extends FunctionMockerProvider
 
     private function getPosts(array $query): array
     {
-        $retrievePostIDs = ($query['fields'] ?? null) === 'ids';
+        $retrieveIDs = ($query['fields'] ?? null) === 'ids';
 
         /**
          * If providing the IDs to retrieve, re-generate exactly those objects.
@@ -255,7 +255,7 @@ class Post extends FunctionMockerProvider
                 array_keys($this->posts)
             );
             $postIDs = $this->paginate($postIDs, $query['posts_per_page'] ?? -1, $query['offset'] ?? 0);
-            if ($retrievePostIDs) {
+            if ($retrieveIDs) {
                 return $postIDs;
             }
             return array_map(
@@ -283,7 +283,7 @@ class Post extends FunctionMockerProvider
             );
         }
         $posts = $this->paginate($posts, $query['posts_per_page'] ?? -1, $query['offset'] ?? 0);
-        if ($retrievePostIDs) {
+        if ($retrieveIDs) {
             return array_keys($posts);
         }
         return array_map(
