@@ -328,7 +328,7 @@ class Post extends FunctionMockerProvider
         $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
         return array_filter(
             $postDataEntries,
-            fn (array $fakePostDataEntry): bool => in_array($fakePostDataEntry[$property] ?? null, $propertyValues),
+            fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
         );
     }
 
