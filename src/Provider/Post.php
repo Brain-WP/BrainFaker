@@ -220,7 +220,82 @@ class Post extends FunctionMockerProvider
                 }
             );
 
+        $this->functionExpectations->mock('get_posts')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getPosts(...));
+
         $this->stopMockingFunctions();
+    }
+
+    private function getPosts(array $query): array
+    {
+        $retrievePostIDs = ($query['fields'] ?? null) === 'ids';
+
+        /**
+         * If providing the IDs to retrieve, re-generate exactly those objects.
+         */
+        $ids = $query['include'] ?? null;
+        if (!empty($ids)) {
+            /** @var int[] */
+            $postIDs = is_string($ids) ? array_map(
+                fn (string $id) => (int) trim($id),
+                explode(',', $ids)
+            ) : $ids;
+            $postIDs = array_intersect(
+                $postIDs,
+                array_keys($this->posts)
+            );            
+            if ($retrievePostIDs) {
+                return $postIDs;
+            }
+            return array_map(
+                fn (string|int $postID) => $this->__invoke($this->posts[$postID]),
+                $postIDs
+            );
+        }
+
+        $posts = $this->posts;
+        $filterableProperties = [
+            'post_type',
+            'post_status',
+        ];
+        foreach ($filterableProperties as $queryProperty => $dataProperty) {
+            if (is_numeric($queryProperty)) {
+                $queryProperty = $dataProperty;
+            }
+            if (!isset($query[$queryProperty])) {
+                continue;
+            }
+            $posts = $this->filterPostDataEntriesByProperty(
+                $posts,
+                $dataProperty,
+                $query[$queryProperty]
+            );
+        }
+        $posts = array_slice(
+            $posts,
+            $query['offset'] ?? 0,
+            $query['posts_per_page'] ?? 10,
+            true
+        );
+        if ($retrievePostIDs) {
+            $postIDs = array_keys($posts);
+            return $postIDs;
+        }
+        return array_map(
+            $this->__invoke(...),
+            array_values($posts)
+        );
+    }
+
+    private function filterPostDataEntriesByProperty(array $postDataEntries, string $property, string|int|array $propertyValueOrValues): array
+    {
+        $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
+        return array_filter(
+            $postDataEntries,
+            fn (array $fakePostDataEntry): bool => in_array($fakePostDataEntry[$property] ?? null, $propertyValues),
+        );
     }
 
     /**
