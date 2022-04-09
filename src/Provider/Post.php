@@ -242,6 +242,7 @@ class Post extends FunctionMockerProvider
                 fn (string $id) => (int) trim($id),
                 explode(',', $ids)
             ) : $ids;
+            // Make sure those IDs exist
             $postIDs = array_intersect(
                 $postIDs,
                 array_keys($this->posts)
@@ -251,7 +252,7 @@ class Post extends FunctionMockerProvider
                 return $postIDs;
             }
             return array_map(
-                fn (string|int $postID) => $this->__invoke($this->posts[$postID]),
+                fn (int $postID) => $this->__invoke($this->posts[$postID]),
                 $postIDs
             );
         }
@@ -276,12 +277,11 @@ class Post extends FunctionMockerProvider
         }
         $posts = $this->paginatePosts($posts, $query);
         if ($retrievePostIDs) {
-            $postIDs = array_keys($posts);
-            return $postIDs;
+            return array_keys($posts);
         }
         return array_map(
             $this->__invoke(...),
-            array_values($posts)
+            $posts
         );
     }
 
