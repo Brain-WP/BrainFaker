@@ -13,6 +13,8 @@ namespace Brain\Faker\Provider;
 
 class Post extends FunctionMockerProvider
 {
+    use FunctionMockerProviderTrait;
+
     public const MIME_TYPES = [
         'image/jpeg',
         'image/gif',
@@ -233,11 +235,6 @@ class Post extends FunctionMockerProvider
         $this->stopMockingFunctions();
     }
 
-    private function escSql(string|array $data): string|array
-    {
-        return $data;
-    }
-
     private function getPosts(array $query): array
     {
         $retrievePostIDs = ($query['fields'] ?? null) === 'ids';
@@ -279,7 +276,7 @@ class Post extends FunctionMockerProvider
             if (!isset($query[$queryProperty])) {
                 continue;
             }
-            $posts = $this->filterPostDataEntriesByProperty(
+            $posts = $this->filterDataEntriesByProperty(
                 $posts,
                 $dataProperty,
                 $query[$queryProperty]
@@ -292,43 +289,6 @@ class Post extends FunctionMockerProvider
         return array_map(
             $this->__invoke(...),
             $posts
-        );
-    }
-
-    /**
-     * @param int[]|array<int,array<string,mixed>> $entries Either post IDs or data arrays
-     * @param array<string,mixed> $query
-     * @return int[]|array<int,array<string,mixed>>
-     */
-    private function paginatePosts(array $entries, array $query): array
-    {
-        $offset = (int) ($query['offset'] ?? 0);
-        $limit = (int) ($query['posts_per_page'] ?? 10);
-        if ($limit > 0) {
-            return array_slice(
-                $entries,
-                $offset,
-                $limit,
-                true,
-            );
-        }
-        if ($offset !== 0) {
-            return array_slice(
-                $entries,
-                $offset,
-                null,
-                true,
-            );
-        }
-        return $entries;
-    }
-
-    private function filterPostDataEntriesByProperty(array $postDataEntries, string $property, string|int|array $propertyValueOrValues): array
-    {
-        $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
-        return array_filter(
-            $postDataEntries,
-            fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
         );
     }
 
