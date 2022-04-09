@@ -542,7 +542,7 @@ class User extends FunctionMockerProvider
     private function getFilterableProperties(): array
     {
         return [
-            'login',
+            'login' => 'user_login',
         ];
     }
 
