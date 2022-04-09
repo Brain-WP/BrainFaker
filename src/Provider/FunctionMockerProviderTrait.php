@@ -33,4 +33,111 @@ trait FunctionMockerProviderTrait
             fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
         );
     }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getEntityEntries(array $query): array
+    {
+        $retrieveIDs = $this->retrieveIDs($query);
+        $dataEntries = $this->getDataEntries();
+
+        /**
+         * If providing the IDs to retrieve, re-generate exactly those objects.
+         */
+        $ids = $this->getIncludedIDs($query);
+        if ($ids !== []) {
+            // Make sure those IDs exist
+            $ids = array_intersect(
+                $ids,
+                array_keys($dataEntries)
+            );
+            $ids = $this->paginate(
+                $ids,
+                $this->getPaginationLimit($query),
+                $this->getPaginationOffset($query),
+            );
+            if ($retrieveIDs) {
+                return $ids;
+            }
+            return array_map(
+                fn (int $id) => $this->__invoke($dataEntries[$id]),
+                $ids
+            );
+        }
+
+        /**
+         * If provided in the query, filter the entities that have some
+         * property with some value
+         */
+        foreach ($this->getFilterableProperties() as $maybeQueryProperty => $dataProperty) {
+            $queryProperty = is_numeric($maybeQueryProperty) ? $dataProperty : $maybeQueryProperty;
+            if (!isset($query[$queryProperty])) {
+                continue;
+            }
+            $dataEntries = $this->filterDataEntriesByProperty(
+                $dataEntries,
+                $dataProperty,
+                $query[$queryProperty]
+            );
+        }
+        $dataEntries = $this->paginate(
+            $dataEntries,
+            $this->getPaginationLimit($query),
+            $this->getPaginationOffset($query),
+        );
+        if ($retrieveIDs) {
+            return array_keys($dataEntries);
+        }
+        return array_map(
+            $this->__invoke(...),
+            $dataEntries
+        );
+    }
+
+    abstract private function retrieveIDs(array $query): bool;
+
+    /**
+     * @return int[]
+     */
+    private function getIncludedIDs(array $query): array
+    {
+        /** @var array|string|null */
+        $ids = $query['include'] ?? null;
+        if (empty($ids)) {
+            return [];
+        }
+        return is_string($ids) ?
+            array_map(
+                fn (string $id) => (int) trim($id),
+                explode(',', $ids)
+            )
+            : $ids;
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    abstract private function getDataEntries(): array;
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    abstract private function getPaginationLimit(array $query): int;
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getPaginationOffset(array $query): int
+    {
+        return $query['offset'] ?? 0;
+    }
+
+    /**
+     * @return array<int|string,string>
+     */
+    private function getFilterableProperties(): array
+    {
+        return [];
+    }
 }

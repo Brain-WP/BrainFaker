@@ -230,66 +230,41 @@ class Post extends FunctionMockerProvider
         $this->functionExpectations->mock('get_posts')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any())
-            ->andReturnUsing($this->getPosts(...));
+            ->andReturnUsing($this->getEntityEntries(...));
 
         $this->stopMockingFunctions();
     }
 
-    private function getPosts(array $query): array
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function getDataEntries(): array
     {
-        $retrieveIDs = ($query['fields'] ?? null) === 'ids';
+        return $this->posts;
+    }
 
-        /**
-         * If providing the IDs to retrieve, re-generate exactly those objects.
-         */
-        $ids = $query['include'] ?? null;
-        if (!empty($ids)) {
-            /** @var int[] */
-            $postIDs = is_string($ids) ? array_map(
-                fn (string $id) => (int) trim($id),
-                explode(',', $ids)
-            ) : $ids;
-            // Make sure those IDs exist
-            $postIDs = array_intersect(
-                $postIDs,
-                array_keys($this->posts)
-            );
-            $postIDs = $this->paginate($postIDs, $query['posts_per_page'] ?? -1, $query['offset'] ?? 0);
-            if ($retrieveIDs) {
-                return $postIDs;
-            }
-            return array_map(
-                fn (int $postID) => $this->__invoke($this->posts[$postID]),
-                $postIDs
-            );
-        }
+    private function retrieveIDs(array $query): bool
+    {
+        return ($query['fields'] ?? null) === 'ids';
+    }
 
-        $posts = $this->posts;
-        $filterableProperties = [
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getPaginationLimit(array $query): int
+    {
+        return $query['posts_per_page'] ?? -1;
+    }
+
+    /**
+     * @return array<int|string,string>
+     */
+    private function getFilterableProperties(): array
+    {
+        return [
             'post_type',
             'post_status',
         ];
-        foreach ($filterableProperties as $queryProperty => $dataProperty) {
-            if (is_numeric($queryProperty)) {
-                $queryProperty = $dataProperty;
-            }
-            if (!isset($query[$queryProperty])) {
-                continue;
-            }
-            $posts = $this->filterDataEntriesByProperty(
-                $posts,
-                $dataProperty,
-                $query[$queryProperty]
-            );
-        }
-        $posts = $this->paginate($posts, $query['posts_per_page'] ?? -1, $query['offset'] ?? 0);
-        if ($retrieveIDs) {
-            return array_keys($posts);
-        }
-        return array_map(
-            $this->__invoke(...),
-            $posts
-        );
     }
 
     /**
