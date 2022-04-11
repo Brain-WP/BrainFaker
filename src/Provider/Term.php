@@ -165,7 +165,7 @@ class Term extends FunctionMockerProvider
         return $this->getCountableEntityEntries(
             [
                 ...$query,
-                'taxonomy' => 'post_tag',
+                'taxonomy' => 'category',
             ]
         );
     }
