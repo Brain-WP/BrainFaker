@@ -149,7 +149,7 @@ class Term extends FunctionMockerProvider
      */
     private function getTags(array $query): array|int
     {
-        return $this->getEntityEntries(
+        return $this->getCountableEntityEntries(
             [
                 ...$query,
                 'taxonomy' => 'post_tag',
@@ -162,7 +162,7 @@ class Term extends FunctionMockerProvider
      */
     private function getCategories(array $query): array|int
     {
-        return $this->getEntityEntries(
+        return $this->getCountableEntityEntries(
             [
                 ...$query,
                 'taxonomy' => 'post_tag',
