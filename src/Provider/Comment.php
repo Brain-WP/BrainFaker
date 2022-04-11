@@ -13,7 +13,7 @@ namespace Brain\Faker\Provider;
 
 class Comment extends FunctionMockerProvider
 {
-    use FunctionMockerProviderTrait;
+    use CountableFunctionMockerProviderTrait;
     
     public const STATUSES = [
         'hold',
@@ -139,7 +139,7 @@ class Comment extends FunctionMockerProvider
         $this->functionExpectations->mock('get_comments')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any())
-            ->andReturnUsing($this->getComments(...));
+            ->andReturnUsing($this->getCountableEntityEntries(...));
 
         $this->stopMockingFunctions();
     }
@@ -147,13 +147,9 @@ class Comment extends FunctionMockerProvider
     /**
      * @param array<string,mixed> $query
      */
-    private function getComments(array $query): array|int
+    private function countEntityEntries(array $query): bool
     {
-        $comments = $this->getEntityEntries($query);
-        if ($query['count'] ?? false) {
-            return count($comments);
-        }
-        return $comments;
+        return $query['count'] ?? false;
     }
 
     /**
