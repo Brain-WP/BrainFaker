@@ -140,4 +140,21 @@ trait FunctionMockerProviderTrait
     {
         return [];
     }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getCountableEntityEntries(array $query): array|int
+    {
+        $entityEntries = $this->getEntityEntries($query);
+        if ($this->countEntityEntries($query)) {
+            return count($entityEntries);
+        }
+        return $entityEntries;
+    }
+
+    private function countEntityEntries(array $query): bool
+    {
+        return false;
+    }
 }
