@@ -13,6 +13,8 @@ namespace Brain\Faker\Provider;
 
 class Term extends FunctionMockerProvider
 {
+    use CountableFunctionMockerProviderTrait;
+    
     /**
      * @var array[]
      */
@@ -111,7 +113,94 @@ class Term extends FunctionMockerProvider
                 }
             );
 
+        $this->functionExpectations->mock('esc_sql')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->escSql(...));
+
+        $this->functionExpectations->mock('get_terms')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getCountableEntityEntries(...));
+
+        $this->functionExpectations->mock('get_tags')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getTags(...));
+
+        $this->functionExpectations->mock('get_categories')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getCategories(...));
+
         $this->stopMockingFunctions();
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function countEntityEntries(array $query): bool
+    {
+        return ($query['count'] ?? false) && $query['fields'] === 'count';
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getTags(array $query): array|int
+    {
+        return $this->getEntityEntries(
+            [
+                ...$query,
+                'taxonomy' => 'post_tag',
+            ]
+        );
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getCategories(array $query): array|int
+    {
+        return $this->getEntityEntries(
+            [
+                ...$query,
+                'taxonomy' => 'post_tag',
+            ]
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function getDataEntries(): array
+    {
+        return $this->terms;
+    }
+
+    private function retrieveIDs(array $query): bool
+    {
+        return ($query['fields'] ?? null) === 'ids';
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     */
+    private function getPaginationLimit(array $query): int
+    {
+        return $query['number'] ?? 0;
+    }
+
+    /**
+     * @return array<int|string,string>
+     */
+    private function getFilterableProperties(): array
+    {
+        return [
+            'taxonomy',
+            'parent',
+            'slug',
+        ];
     }
 
     /**
