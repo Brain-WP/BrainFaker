@@ -14,6 +14,9 @@ namespace Brain\Faker\Provider;
 use Brain\Faker\MonkeyWpUser;
 use Brain\Monkey;
 
+use WP_User;
+use WP_Error;
+
 class User extends FunctionMockerProvider
 {
     use FunctionMockerProviderTrait;
@@ -512,6 +515,18 @@ class User extends FunctionMockerProvider
             ->with(\Mockery::any())
             ->andReturnUsing($this->getEntityEntries(...));
 
+        $this->functionExpectations->mock('wp_signon')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->wpSignOn(...));
+
+        $this->functionExpectations->mock('wp_set_current_user')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->wpSetCurrentUser(...));
+
+        Monkey\Functions\when('is_user_logged_in')->justReturn(false);
+
         $this->stopMockingFunctions();
     }
 
@@ -546,6 +561,33 @@ class User extends FunctionMockerProvider
         ];
     }
 
+    private function isUserLoggedIn(): bool
+    {
+        return $this->currentUserSet;
+    }
+
+    private function wpSignOn(array $credentials): ?WP_User/**|WP_Error*/
+    {
+        $username = $credentials['user_login'] ?? null;
+        if ($username === null) {
+            return null;
+        }
+        $users = $this->getEntityEntries(['login' => $username]);
+        if ($users === []) {
+            return null;
+        }
+        return $users[0];
+    }
+
+    private function wpSetCurrentUser(int $userID): void
+    {
+        $users = $this->getEntityEntries(['include' => $userID]);
+        if ($users !== []) {
+            $user = $users[0];
+            $this->makeCurrent($user);
+        }
+    }
+
     /**
      * @param \WP_User $user
      * @return void
@@ -558,6 +600,7 @@ class User extends FunctionMockerProvider
 
         $this->currentUserSet = true;
 
+        Monkey\Functions\when('is_user_logged_in')->justReturn(true);
         Monkey\Functions\when('get_current_user_id')->justReturn($user->ID);
         Monkey\Functions\when('wp_get_current_user')->justReturn($user);
         Monkey\Functions\when('current_user_can')->alias([$user, 'has_cap']);
