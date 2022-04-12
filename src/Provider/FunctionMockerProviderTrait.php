@@ -28,10 +28,10 @@ trait FunctionMockerProviderTrait
     private function filterDataEntriesByProperty(array $dataEntries, string $property, string|int|array $propertyValueOrValues): array
     {
         $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
-        return array_filter(
+        return array_values(array_filter(
             $dataEntries,
             fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
-        );
+        ));
     }
 
     /**
@@ -48,10 +48,10 @@ trait FunctionMockerProviderTrait
         $ids = $this->getIncludedIDs($query);
         if ($ids !== []) {
             // Make sure those IDs exist
-            $ids = array_intersect(
+            $ids = array_values(array_intersect(
                 $ids,
                 array_keys($dataEntries)
-            );
+            ));
             $ids = $this->paginate(
                 $ids,
                 $this->getPaginationLimit($query),
