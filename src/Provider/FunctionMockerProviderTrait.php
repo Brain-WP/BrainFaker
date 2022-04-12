@@ -48,10 +48,10 @@ trait FunctionMockerProviderTrait
         $ids = $this->getIncludedIDs($query);
         if ($ids !== []) {
             // Make sure those IDs exist
-            $ids = array_intersect(
+            $ids = array_values(array_intersect(
                 $ids,
                 array_keys($dataEntries)
-            );
+            ));
             $ids = $this->paginate(
                 $ids,
                 $this->getPaginationLimit($query),
@@ -89,10 +89,10 @@ trait FunctionMockerProviderTrait
         if ($retrieveIDs) {
             return array_keys($dataEntries);
         }
-        return array_map(
+        return array_values(array_map(
             $this->__invoke(...),
             $dataEntries
-        );
+        ));
     }
 
     abstract private function retrieveIDs(array $query): bool;
@@ -102,17 +102,18 @@ trait FunctionMockerProviderTrait
      */
     private function getIncludedIDs(array $query): array
     {
-        /** @var array|string|null */
-        $ids = $query['include'] ?? null;
-        if (empty($ids)) {
+        /** @var array|string|int|null */
+        $idOrIDs = $query['include'] ?? null;
+        if (empty($idOrIDs)) {
             return [];
         }
-        return is_string($ids) ?
-            array_map(
+        if (is_string($idOrIDs)) {
+            return array_map(
                 fn (string $id) => (int) trim($id),
-                explode(',', $ids)
-            )
-            : $ids;
+                explode(',', $idOrIDs)
+            );
+        }
+        return is_array($idOrIDs) ? $idOrIDs : [$idOrIDs];
     }
 
     /**
