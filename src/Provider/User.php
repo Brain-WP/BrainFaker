@@ -14,9 +14,6 @@ namespace Brain\Faker\Provider;
 use Brain\Faker\MonkeyWpUser;
 use Brain\Monkey;
 
-use WP_User;
-use WP_Error;
-
 class User extends FunctionMockerProvider
 {
     use FunctionMockerProviderTrait;
@@ -566,17 +563,28 @@ class User extends FunctionMockerProvider
         return $this->currentUserSet;
     }
 
-    private function wpSignOn(array $credentials): ?WP_User/**|WP_Error*/
+    private function wpSignOn(array $credentials): \WP_User|\WP_Error
     {
         $username = $credentials['user_login'] ?? null;
         if ($username === null) {
-            return null;
+            return $this->createWPError('1', '\'user_login\' cannot be empty');
         }
         $users = $this->getEntityEntries(['login' => $username]);
         if ($users === []) {
-            return null;
+            return $this->createWPError('2', sprintf(
+                'There is no user with username \'%s\'',
+                $username
+            ));
         }
         return $users[0];
+    }
+
+    private function createWPError(string $code, string $message): \WP_Error
+    {
+        return (new Error($this->generator))->__invoke([
+            'code' => $code,
+            'message' => $message,
+        ]);
     }
 
     private function wpSetCurrentUser(int $userID): void
