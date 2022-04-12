@@ -102,17 +102,18 @@ trait FunctionMockerProviderTrait
      */
     private function getIncludedIDs(array $query): array
     {
-        /** @var array|string|null */
-        $ids = $query['include'] ?? null;
-        if (empty($ids)) {
+        /** @var array|string|int|null */
+        $idOrIDs = $query['include'] ?? null;
+        if (empty($idOrIDs)) {
             return [];
         }
-        return is_array($ids) ?
-            $ids
-            : array_map(
+        if (is_string($idOrIDs)) {
+            return array_map(
                 fn (string $id) => (int) trim($id),
-                explode(',', $ids)
+                explode(',', $idOrIDs)
             );
+        }
+        return is_array($idOrIDs) ? $idOrIDs : [$idOrIDs];
     }
 
     /**
