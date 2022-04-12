@@ -107,12 +107,12 @@ trait FunctionMockerProviderTrait
         if (empty($ids)) {
             return [];
         }
-        return is_string($ids) ?
-            array_map(
+        return is_array($ids) ?
+            $ids
+            : array_map(
                 fn (string $id) => (int) trim($id),
                 explode(',', $ids)
-            )
-            : $ids;
+            );
     }
 
     /**
