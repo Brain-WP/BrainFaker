@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Brain\Faker\Provider;
 
+use DateTime;
+use DateTimeZone;
+
 class Comment extends FunctionMockerProvider
 {
     use CountableFunctionMockerProviderTrait;
@@ -141,6 +144,11 @@ class Comment extends FunctionMockerProvider
             ->with(\Mockery::any())
             ->andReturnUsing($this->getCountableEntityEntries(...));
 
+        $this->functionExpectations->mock('wp_insert_comment')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->insertComment(...));
+
         $this->stopMockingFunctions();
     }
 
@@ -183,5 +191,18 @@ class Comment extends FunctionMockerProvider
             'parent' => 'comment_parent',
             'comment_type',
         ];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function insertComment(array $commentData): int
+    {
+        $date = new DateTime();
+        $gmt = new DateTimeZone('GMT');
+        $commentData['comment_date'] = $date->format('Y-m-d H:i:s');
+        $commentData['comment_date_gmt'] = $date->setTimezone($gmt)->format('Y-m-d H:i:s');
+        $comment = $this->__invoke($commentData);
+        return (int)$comment->comment_ID;
     }
 }
