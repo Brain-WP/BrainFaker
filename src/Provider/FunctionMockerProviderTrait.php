@@ -28,10 +28,10 @@ trait FunctionMockerProviderTrait
     private function filterDataEntriesByProperty(array $dataEntries, string $property, string|int|array $propertyValueOrValues): array
     {
         $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
-        return array_values(array_filter(
+        return array_filter(
             $dataEntries,
             fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
-        ));
+        );
     }
 
     /**
@@ -89,10 +89,10 @@ trait FunctionMockerProviderTrait
         if ($retrieveIDs) {
             return array_keys($dataEntries);
         }
-        return array_map(
+        return array_values(array_map(
             $this->__invoke(...),
             $dataEntries
-        );
+        ));
     }
 
     abstract private function retrieveIDs(array $query): bool;
