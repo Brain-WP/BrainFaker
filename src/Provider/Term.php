@@ -113,11 +113,6 @@ class Term extends FunctionMockerProvider
                 }
             );
 
-        $this->functionExpectations->mock('esc_sql')
-            ->zeroOrMoreTimes()
-            ->with(\Mockery::any())
-            ->andReturnUsing($this->escSql(...));
-
         $this->functionExpectations->mock('get_terms')
             ->zeroOrMoreTimes()
             ->with(\Mockery::any())
