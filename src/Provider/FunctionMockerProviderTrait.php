@@ -6,11 +6,6 @@ namespace Brain\Faker\Provider;
 
 trait FunctionMockerProviderTrait
 {
-    private function escSql(string|array $data): string|array
-    {
-        return $data;
-    }
-
     /**
      * @param int[]|array<int,array<string,mixed>> $entries Either entity IDs, or the endity data arrays
      * @return int[]|array<int,array<string,mixed>>
