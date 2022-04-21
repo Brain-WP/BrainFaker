@@ -227,6 +227,16 @@ class Post extends FunctionMockerProvider
             ->with(\Mockery::any())
             ->andReturnUsing($this->getEntityEntries(...));
 
+        $this->functionExpectations->mock('get_the_excerpt')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getTheExcerpt(...));
+
+        $this->functionExpectations->mock('get_post_status')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getPostStatus(...));
+
         $this->stopMockingFunctions();
     }
 
@@ -260,6 +270,24 @@ class Post extends FunctionMockerProvider
             'post_type',
             'post_status',
         ];
+    }
+    
+    private function getTheExcerpt(int|\WP_Post $post): string
+    {
+        $post = is_object($post) ? $post : $this->getPost($post);
+        return $post->post_excerpt;
+    }
+
+    private function getPost(int $postID): \WP_Post
+    {
+        $dataEntries = $this->getDataEntries();
+        return $this->__invoke($dataEntries[$postID]);
+    }
+    
+    private function getPostStatus(int|\WP_Post $post): string
+    {
+        $post = is_object($post) ? $post : $this->getPost($post);
+        return $post->post_status;
     }
 
     /**
