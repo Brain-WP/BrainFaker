@@ -269,6 +269,7 @@ class Post extends FunctionMockerProvider
         return [
             'post_type',
             'post_status',
+            'name' => 'post_name',
         ];
     }
     
