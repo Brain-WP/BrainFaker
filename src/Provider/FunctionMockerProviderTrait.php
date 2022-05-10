@@ -20,7 +20,7 @@ trait FunctionMockerProviderTrait
         );
     }
 
-    private function filterDataEntries(array $dataEntries): array
+    protected function filterDataEntries(array $dataEntries): array
     {
         /**
          * If provided in the query, filter the entities that have some
