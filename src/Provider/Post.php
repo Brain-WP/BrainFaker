@@ -239,6 +239,11 @@ class Post extends FunctionMockerProvider
             ->with(\Mockery::any())
             ->andReturnUsing($this->getPostStatus(...));
 
+        $this->functionExpectations->mock('get_permalink')
+            ->zeroOrMoreTimes()
+            ->with(\Mockery::any())
+            ->andReturnUsing($this->getPermalink(...));
+
         $this->stopMockingFunctions();
     }
 
@@ -323,6 +328,14 @@ class Post extends FunctionMockerProvider
     {
         $post = is_object($post) ? $post : $this->getPost($post);
         return $post->post_status;
+    }
+    
+    private function getPermalink(int|\WP_Post $post): string
+    {
+        $post = is_object($post) ? $post : $this->getPost($post);
+        $slug = $post->post_name;
+        $domain = 'https://www.mysite.com';
+        return $domain . '/' . $slug;
     }
 
     /**
