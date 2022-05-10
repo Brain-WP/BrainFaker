@@ -13,7 +13,9 @@ namespace Brain\Faker\Provider;
 
 class Post extends FunctionMockerProvider
 {
-    use FunctionMockerProviderTrait;
+    use FunctionMockerProviderTrait {
+        filterDataEntries as upstreamFilterDataEntries;
+    }
 
     public const MIME_TYPES = [
         'image/jpeg',
@@ -251,6 +253,38 @@ class Post extends FunctionMockerProvider
     private function retrieveIDs(array $query): bool
     {
         return ($query['fields'] ?? null) === 'ids';
+    }
+
+    /**
+     * Additional filtering for posts
+     */
+    protected function filterDataEntries(array $dataEntries, array $query): array
+    {
+        /**
+         * Filter by date_query
+         */
+        if (isset($query['date_query'])) {
+            /** @var array */
+            $dateQueries = $query['date_query'];
+            foreach ($dateQueries as $dateQuery) {
+                $inclusive = $dateQuery['inclusive'] ?? false;
+                if ($before = $dateQuery['before'] ?? null) {
+                    $before = strtotime($before);
+                    $dataEntries = array_filter(
+                        $dataEntries,
+                        fn (array $postDataEntry): bool => $inclusive ? strtotime($postDataEntry['post_date']) <= $before : strtotime($postDataEntry['post_date']) < $before,
+                    );
+                }
+                if ($after = $dateQuery['after'] ?? null) {
+                    $after = strtotime($after);
+                    $dataEntries = array_filter(
+                        $dataEntries,
+                        fn (array $postDataEntry): bool => $inclusive ? strtotime($postDataEntry['post_date']) >= $after : strtotime($postDataEntry['post_date']) > $after,
+                    );
+                }
+            }
+        }
+        return $this->upstreamFilterDataEntries($dataEntries, $query);
     }
 
     /**
