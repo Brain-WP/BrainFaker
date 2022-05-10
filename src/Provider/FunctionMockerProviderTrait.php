@@ -20,6 +20,26 @@ trait FunctionMockerProviderTrait
         );
     }
 
+    private function filterDataEntries(array $dataEntries): array
+    {
+        /**
+         * If provided in the query, filter the entities that have some
+         * property with some value
+         */
+        foreach ($this->getFilterableProperties() as $maybeQueryProperty => $dataProperty) {
+            $queryProperty = is_numeric($maybeQueryProperty) ? $dataProperty : $maybeQueryProperty;
+            if (!isset($query[$queryProperty])) {
+                continue;
+            }
+            $dataEntries = $this->filterDataEntriesByProperty(
+                $dataEntries,
+                $dataProperty,
+                $query[$queryProperty]
+            );
+        }
+        return $dataEntries;
+    }
+
     private function filterDataEntriesByProperty(array $dataEntries, string $property, string|int|array $propertyValueOrValues): array
     {
         $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
@@ -61,21 +81,7 @@ trait FunctionMockerProviderTrait
             );
         }
 
-        /**
-         * If provided in the query, filter the entities that have some
-         * property with some value
-         */
-        foreach ($this->getFilterableProperties() as $maybeQueryProperty => $dataProperty) {
-            $queryProperty = is_numeric($maybeQueryProperty) ? $dataProperty : $maybeQueryProperty;
-            if (!isset($query[$queryProperty])) {
-                continue;
-            }
-            $dataEntries = $this->filterDataEntriesByProperty(
-                $dataEntries,
-                $dataProperty,
-                $query[$queryProperty]
-            );
-        }
+        $dataEntries = $this->filterDataEntries($dataEntries);
         $dataEntries = $this->paginate(
             $dataEntries,
             $this->getPaginationLimit($query),
