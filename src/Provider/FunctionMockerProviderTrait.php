@@ -20,7 +20,7 @@ trait FunctionMockerProviderTrait
         );
     }
 
-    protected function filterDataEntries(array $dataEntries): array
+    protected function filterDataEntries(array $dataEntries, array $query): array
     {
         /**
          * If provided in the query, filter the entities that have some
@@ -81,7 +81,7 @@ trait FunctionMockerProviderTrait
             );
         }
 
-        $dataEntries = $this->filterDataEntries($dataEntries);
+        $dataEntries = $this->filterDataEntries($dataEntries, $query);
         $dataEntries = $this->paginate(
             $dataEntries,
             $this->getPaginationLimit($query),
