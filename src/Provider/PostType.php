@@ -1013,6 +1013,14 @@ class PostType extends FunctionMockerProvider
                 }
             );
 
+        $this->functionExpectations->mock('get_post_types')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function () { // phpcs:ignore
+                    return array_keys($this->types);
+                }
+            );
+
         $this->stopMockingFunctions();
     }
 }
