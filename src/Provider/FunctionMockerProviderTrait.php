@@ -40,12 +40,21 @@ trait FunctionMockerProviderTrait
         return $dataEntries;
     }
 
-    private function filterDataEntriesByProperty(array $dataEntries, string $property, string|int|array $propertyValueOrValues): array
+    private function filterDataEntriesByProperty(array $dataEntries, string $property, string|int|float|bool|array $propertyValueOrValues): array
     {
-        $propertyValues = is_array($propertyValueOrValues) ? $propertyValueOrValues : [$propertyValueOrValues];
+        if (is_array($propertyValueOrValues)) {
+            /** @var array */
+            $propertyValues = $propertyValueOrValues;
+            return array_filter(
+                $dataEntries,
+                fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
+            );
+        }
+        /** @var string|int|float|bool */
+        $propertyValue = $propertyValueOrValues;
         return array_filter(
             $dataEntries,
-            fn (array $postDataEntry): bool => in_array($postDataEntry[$property] ?? null, $propertyValues),
+            fn (array $postDataEntry): bool => ($postDataEntry[$property] ?? null) === $propertyValue,
         );
     }
 
