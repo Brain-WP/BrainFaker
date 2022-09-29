@@ -54,9 +54,16 @@ trait FunctionMockerProviderTrait
         $propertyValue = $propertyValueOrValues;
         return array_filter(
             $dataEntries,
-            // Important: Use "==" here and not "===", since "comment_parent" may be stored as `"0"` (string) and be filtered as `0` (int)
-            fn (array $postDataEntry): bool => ($postDataEntry[$property] ?? null) == $propertyValue,
+            fn (array $dataEntry): bool => $this->isMatchingProperty($dataEntry, $property, $propertyValue),
         );
+    }
+
+    private function isMatchingProperty(
+        array $dataEntry,
+        string $property,
+        string|int|float|bool $propertyValue,
+    ): bool {
+        return ($dataEntry[$property] ?? null) === $propertyValue;
     }
 
     /**
