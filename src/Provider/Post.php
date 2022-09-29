@@ -315,13 +315,13 @@ class Post extends FunctionMockerProvider
     }
 
     private function isMatchingProperty(
+        array $dataEntry,
         string $property,
-        string|int|float|bool $postDataEntryValue,
         string|int|float|bool $propertyValue,
     ): bool {
         return match ($property) {
-            's' => str_contains($propertyValue, $postDataEntryValue),
-            default => $this->upstreamIsMatchingProperty($property, $postDataEntryValue, $propertyValue),
+            's' => str_contains($dataEntry['post_title'], $propertyValue),
+            default => $this->upstreamIsMatchingProperty($dataEntry, $property, $propertyValue),
         };
     }
     

@@ -54,16 +54,16 @@ trait FunctionMockerProviderTrait
         $propertyValue = $propertyValueOrValues;
         return array_filter(
             $dataEntries,
-            fn (array $postDataEntry): bool => $this->isMatchingProperty($property, $postDataEntry[$property] ?? null, $propertyValue),
+            fn (array $dataEntry): bool => $this->isMatchingProperty($dataEntry, $property, $propertyValue),
         );
     }
 
     private function isMatchingProperty(
+        array $dataEntry,
         string $property,
-        string|int|float|bool $postDataEntryValue,
         string|int|float|bool $propertyValue,
     ): bool {
-        return $postDataEntryValue === $propertyValue;
+        return ($dataEntry[$property] ?? null) === $propertyValue;
     }
 
     /**

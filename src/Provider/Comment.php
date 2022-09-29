@@ -191,14 +191,14 @@ class Comment extends FunctionMockerProvider
     }
 
     private function isMatchingProperty(
+        array $dataEntry,
         string $property,
-        string|int|float|bool $postDataEntryValue,
         string|int|float|bool $propertyValue,
     ): bool {
         return match ($property) {
             // Use "==" here and not "===", since "comment_parent" may be stored as `"0"` (string) and be filtered as `0` (int)
-            "comment_parent" => $postDataEntryValue == $propertyValue,
-            default => $this->upstreamIsMatchingProperty($property, $postDataEntryValue, $propertyValue),
+            "comment_parent" => ($dataEntry[$property] ?? null) == $propertyValue,
+            default => $this->upstreamIsMatchingProperty($dataEntry, $property, $propertyValue),
         };
     }
 
