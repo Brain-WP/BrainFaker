@@ -310,7 +310,7 @@ class Post extends FunctionMockerProvider
             'post_type',
             'post_status',
             'name' => 'post_name',
-            'search',
+            's', // 'search'
         ];
     }
 
@@ -320,7 +320,7 @@ class Post extends FunctionMockerProvider
         string|int|float|bool $propertyValue,
     ): bool {
         return match ($property) {
-            "search" => str_contains($propertyValue, $postDataEntryValue),
+            's' => str_contains($propertyValue, $postDataEntryValue),
             default => $this->upstreamIsMatchingProperty($property, $postDataEntryValue, $propertyValue),
         };
     }
