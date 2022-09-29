@@ -17,6 +17,7 @@ class Post extends FunctionMockerProvider
         filterDataEntries as upstreamFilterDataEntries;
         isMatchingProperty as upstreamIsMatchingProperty;
     }
+    use CreateWPErrorMockerProviderTrait;
 
     public const MIME_TYPES = [
         'image/jpeg',
@@ -251,7 +252,7 @@ class Post extends FunctionMockerProvider
                 function ($postarr = array()) { // phpcs:ignore
                     $postId = $postarr['ID'];
                     if (!$postId || !(is_numeric($postId) || is_string($postId))) {
-                        return '';
+                        return $this->createWPError('invalid_post', 'Invalid post ID.' );
                     }
 
                     $post = $this->__invoke($postarr);
