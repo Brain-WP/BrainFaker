@@ -245,6 +245,20 @@ class Post extends FunctionMockerProvider
             ->with(\Mockery::any())
             ->andReturnUsing($this->getPermalink(...));
 
+        $this->functionExpectations->mock('wp_update_post')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($postarr = array()) { // phpcs:ignore
+                    $postId = $postarr['ID'];
+                    if (!$postId || !(is_numeric($postId) || is_string($postId))) {
+                        return '';
+                    }
+
+                    $post = $this->__invoke($postarr);
+                    return (int)$post->ID;
+                }
+            );
+
         $this->stopMockingFunctions();
     }
 
