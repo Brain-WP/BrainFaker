@@ -17,6 +17,7 @@ use Brain\Monkey;
 class User extends FunctionMockerProvider
 {
     use FunctionMockerProviderTrait;
+    use CreateWPErrorMockerProviderTrait;
 
     const CAPS = [
         'administrator' => [
@@ -572,14 +573,6 @@ class User extends FunctionMockerProvider
             ));
         }
         return $users[0];
-    }
-
-    private function createWPError(string $code, string $message): \WP_Error
-    {
-        return (new Error($this->generator))->__invoke([
-            'code' => $code,
-            'message' => $message,
-        ]);
     }
 
     private function wpSetCurrentUser(int $userID): void
