@@ -250,17 +250,34 @@ class Post extends FunctionMockerProvider
             ->zeroOrMoreTimes()
             ->andReturnUsing(
                 function ($postarr = array()) { // phpcs:ignore
-                    $postId = $postarr['ID'];
-                    if (!$postId || !(is_numeric($postId) || is_string($postId))) {
-                        return $this->createWPError('invalid_post', 'Invalid post ID.' );
-                    }
+                    return $this->createOrUpdatePost($postarr);
+                }
+            );
 
-                    $post = $this->__invoke($postarr);
-                    return (int)$post->ID;
+        $this->functionExpectations->mock('wp_insert_post')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(
+                function ($postarr = array()) { // phpcs:ignore
+                    return $this->createOrUpdatePost($postarr);
                 }
             );
 
         $this->stopMockingFunctions();
+    }
+
+    /**
+     * @param array<string,mixed> $postarr
+     * @return array<int,array<string,mixed>>
+     */
+    private function createOrUpdatePost(array $postarr = array()): \WP_Error|int
+    {
+        $postId = $postarr['ID'];
+        if (!$postId || !(is_numeric($postId) || is_string($postId))) {
+            return $this->createWPError('invalid_post', 'Invalid post ID.' );
+        }
+
+        $post = $this->__invoke($postarr);
+        return (int)$post->ID;
     }
 
     /**
