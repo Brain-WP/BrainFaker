@@ -15,6 +15,7 @@ class Post extends FunctionMockerProvider
 {
     use FunctionMockerProviderTrait {
         filterDataEntries as upstreamFilterDataEntries;
+        isMatchingProperty as upstreamIsMatchingProperty;
     }
 
     public const MIME_TYPES = [
@@ -309,7 +310,19 @@ class Post extends FunctionMockerProvider
             'post_type',
             'post_status',
             'name' => 'post_name',
+            'search',
         ];
+    }
+
+    private function isMatchingProperty(
+        string $property,
+        string|int|float|bool $postDataEntryValue,
+        string|int|float|bool $propertyValue,
+    ): bool {
+        return match ($property) {
+            "search" => str_contains($propertyValue, $postDataEntryValue),
+            default => $this->upstreamIsMatchingProperty($property, $postDataEntryValue, $propertyValue),
+        };
     }
     
     private function getTheExcerpt(int|\WP_Post $post): string
