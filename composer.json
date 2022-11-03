@@ -1,5 +1,5 @@
 {
-    "name": "baxtian/wp_faker",
+    "name": "brain/faker",
     "description": "Faker (phpfaker/faker) for WordPress via Brain Monkey",
     "minimum-stability": "stable",
     "license": "MIT",
