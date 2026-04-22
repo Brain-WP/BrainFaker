@@ -528,7 +528,7 @@ class Providers
      * @param string $class
      * @param \Throwable|null $previous
      */
-    private function bailForInvalidClass(string $class, \Throwable $previous = null): void
+    private function bailForInvalidClass(string $class, ?\Throwable $previous = null): void
     {
         throw new \Error("{$class} is not a valid provider class.", 0, $previous);
     }
