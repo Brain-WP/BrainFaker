@@ -20,7 +20,7 @@ class ProvidersInitTest extends TestCase
 {
     public function testWpMethodRequiresInitialization()
     {
-        $this->expectExceptionMessageRegExp('/initialized/');
+        $this->expectExceptionMessageMatches('/initialized/');
 
         $provider = new Providers(Factory::create());
         $provider->wp();
@@ -28,7 +28,7 @@ class ProvidersInitTest extends TestCase
 
     public function testCallMethodRequiresInitialization()
     {
-        $this->expectExceptionMessageRegExp('/initialized/');
+        $this->expectExceptionMessageMatches('/initialized/');
 
         $provider = new Providers(Factory::create());
         /** @noinspection PhpUndefinedMethodInspection */

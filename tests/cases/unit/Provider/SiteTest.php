@@ -137,7 +137,7 @@ class SiteTest extends ProviderTestCase
     {
         Monkey\Functions\when('is_multisite')->justReturn(false);
 
-        $this->expectExceptionMessageRegExp('/multisite/');
+        $this->expectExceptionMessageMatches('/multisite/');
         $this->factoryProvider(Provider\Site::class)();
     }
 }

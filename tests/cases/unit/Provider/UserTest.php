@@ -275,7 +275,7 @@ class UserTest extends ProviderTestCase
         $factory = $this->factoryProvider(Provider\User::class);
         $user = $factory();
 
-        $this->expectExceptionMessageRegExp('/WP_User::ID/');
+        $this->expectExceptionMessageMatches('/WP_User::ID/');
 
         $user->get('id');
     }
