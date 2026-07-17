@@ -33,9 +33,9 @@
         "source": "https://github.com/Brain-WP/BrainFaker"
     },
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.4",
         "brain/monkey": "^2.3.1",
-        "fakerphp/faker": "^1.20"
+        "fakerphp/faker": "^1.23.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
@@ -61,8 +61,8 @@
         "tests": "@php ./vendor/phpunit/phpunit/phpunit --no-coverage",
         "tests:coverage": "@php ./vendor/phpunit/phpunit/phpunit --coverage-clover=coverage.xml",
         "phpcs": [
-            "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs -p . --ignore=*/vendor/* --extensions=php --basepath=./ --runtime-set testVersion 7.2-",
-            "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs -p . --standard=PHPCompatibility --ignore=*/vendor/* --extensions=php --basepath=./ --runtime-set testVersion 7.2-"
+            "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs -p . --ignore=*/vendor/* --extensions=php --basepath=./ --runtime-set testVersion 7.4-",
+            "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs -p . --standard=PHPCompatibility --ignore=*/vendor/* --extensions=php --basepath=./ --runtime-set testVersion 7.4-"
         ]
     },
     "config": {
