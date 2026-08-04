@@ -203,7 +203,7 @@ class User extends FunctionMockerProvider
     ];
 
     /**
-     * @var array[]
+     * @var \WP_User[]
      */
     private $users = [];
 
@@ -360,7 +360,6 @@ class User extends FunctionMockerProvider
 
         $user->shouldReceive('get_site_id')->andReturn($siteId)->byDefault();
 
-        $this->saveUser($get, (int)$siteId, $user);
         $this->mockFunctions();
 
         $user->shouldReceive('__monkeyMakeCurrent')
@@ -372,6 +371,8 @@ class User extends FunctionMockerProvider
                     return $user;
                 }
             );
+
+        $this->saveUser($user);
 
         return $user;
     }
@@ -410,19 +411,11 @@ class User extends FunctionMockerProvider
     }
 
     /**
-     * @param array $properties
-     * @param int $siteId
      * @param \WP_User $user
      */
-    private function saveUser(array $properties, int $siteId, \WP_User $user)
+    private function saveUser(\WP_User $user)
     {
-        $updatedProps = $properties;
-        $updatedProps['site_id'] = $siteId;
-        $updatedProps['allcaps'] = $user->allcaps;
-        $updatedProps['roles'] = $user->roles;
-        $updatedProps['user_level'] = $user->user_level;
-
-        $this->users[$user->ID] = $updatedProps;
+        $this->users[$user->ID] = $user;
     }
 
     /**
@@ -448,7 +441,7 @@ class User extends FunctionMockerProvider
                         return false;
                     }
 
-                    return $this->__invoke($this->users[(int)$userId]);
+                    return $this->users[(int)$userId];
                 }
             );
 
@@ -477,7 +470,7 @@ class User extends FunctionMockerProvider
                         return false;
                     }
 
-                    return $this->__invoke($this->users[(int)$id]);
+                    return $this->users[(int)$id];
                 }
             );
 
@@ -494,7 +487,7 @@ class User extends FunctionMockerProvider
                         return false;
                     }
 
-                    $caps = $this->users[(int)$userId]['allcaps'];
+                    $caps = $this->users[(int)$userId]->allcaps;
 
                     return !empty($caps[$cap]);
                 }
